@@ -1,6 +1,6 @@
 #pylint: disable=unused-argument,missing-module-docstring,multiple-imports,c-extension-no-member
 
-import sanic, sanic.response, ujson, os
+import os, sanic, sanic.response, ujson
 from sanic import Sanic
 from sanic.response import json
 
@@ -16,6 +16,9 @@ app.extend(config=Config(
 
 @app.middleware('response')
 async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse):
+    """
+    Adds any boilerplate JSON to any response
+    """
     if response.content_type == "application/json":
         parsed = ujson.loads(response.body)
 
@@ -30,6 +33,9 @@ async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse
 @app.get("/")
 @app.route('/<path:path>')
 async def index(request, path=""):
+    """
+    we all gotta start somewhere
+    """
     return json({"message": "Hello, world.", "path": path})
 
 if __name__ == '__main__':
