@@ -22,7 +22,7 @@ app.extend(config=Config(
     oas_ui_default="swagger",
 ))
 
-if ISDEV:
+if not ISDEV:
     app.config.FORWARDED_SECRET = "secrets-are-overrated" # 10/10 secret
 
 @app.middleware('response')
