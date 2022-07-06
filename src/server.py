@@ -1,8 +1,8 @@
 #pylint: disable=unused-argument,missing-module-docstring,multiple-imports,c-extension-no-member
 
-import os, sanic, sanic.response, ujson
+import chess, os, sanic, sanic.response, ujson
 from sanic import Sanic
-from sanic.response import json
+from sanic.response import json, text
 
 from sanic_ext import Config
 
@@ -31,12 +31,19 @@ async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse
         return None
 
 @app.get("/")
-@app.route('/<path:path>')
 async def index(request, path=""):
     """
     we all gotta start somewhere
     """
     return json({"message": "Hello, world.", "path": path})
+
+@app.get("/chess")
+async def chess_test(request):
+    """
+    returns a starter board
+    """
+
+    return text(str(chess.Board()))
 
 if __name__ == '__main__':
     app.run(
