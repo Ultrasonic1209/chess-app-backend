@@ -63,11 +63,21 @@ async def chess_moves(request: sanic.Request):
 
     return json({"moves": [move.uci() for move in board.legal_moves]})
 
-@app.get("/chess3/<move:str>")
-async def chess_move(request: sanic.Request, move: str):
+@app.get("/chess3")
+async def chess_move(request: sanic.Request):
     """
-    take a chess board, and make a move (UCI move)
+    take a chess board, and make a move
+
+    openapi:
+    ---
+    parameters:
+      - name: move
+        in: query
+        description: the move you want to make (UCI format)
+        required: true
     """
+
+    move = request.args.get("move")
 
     board = chess.Board()
     board.push_uci(move)
