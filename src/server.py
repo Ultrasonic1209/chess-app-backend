@@ -95,7 +95,7 @@ async def git_update(request: sanic.Request):
     openapi:
     ---
     parameters:
-      - name: x-admin-key 
+      - name: x-admin-key
         in: header
         description: This needs to be correct.
         required: true
