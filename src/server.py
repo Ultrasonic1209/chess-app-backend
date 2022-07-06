@@ -38,8 +38,6 @@ async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse
         new_response = json(parsed, status=response.status, headers=response.headers)
 
         return new_response
-    else:
-        return None
 
 @app.get("/")
 async def index(request: sanic.Request, path=""):
