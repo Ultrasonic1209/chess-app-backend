@@ -52,7 +52,7 @@
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	"portsAttributes": {
-		"8080": {
+		"6969": {
 			"label": "API Server"
 		}
 	}
