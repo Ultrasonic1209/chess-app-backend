@@ -93,7 +93,7 @@ async def eyep(request: sanic.Request):
     eyep
     """
     return json({
-        "ip": request.ip,
+        "ip": request.remote_addr,
         "headers": dict(request.headers),
         "forwarded": dict(request.forwarded)
     })
