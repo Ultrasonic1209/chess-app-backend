@@ -43,5 +43,5 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=6969,
         fast=True,
-        dev=bool(os.environ.get("CODESPACES", False))
+        dev=bool(os.environ.get("DEV", False))
     )
