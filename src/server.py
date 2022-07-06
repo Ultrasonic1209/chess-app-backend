@@ -2,7 +2,7 @@
 
 import os
 import chess
-import sanic, sanic.response
+import sanic
 import sanic.response
 import ujson
 from sanic import Sanic
