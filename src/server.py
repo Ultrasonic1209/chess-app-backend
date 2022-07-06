@@ -1,4 +1,6 @@
-import sanic, sanic.response, ujson
+#pylint: disable=unused-argument,missing-module-docstring,multiple-imports,c-extension-no-member
+
+import sanic, sanic.response, ujson, os
 from sanic import Sanic
 from sanic.response import json
 
@@ -30,6 +32,10 @@ async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse
 async def index(request, path=""):
     return json({"message": "Hello, world.", "path": path})
 
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, fast=True)
+    app.run(
+        host='0.0.0.0',
+        port=8080,
+        fast=True,
+        dev=bool(os.environ.get("CODESPACES", False))
+    )
