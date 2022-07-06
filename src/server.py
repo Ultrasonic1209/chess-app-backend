@@ -40,11 +40,11 @@ async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse
         return new_response
 
 @app.get("/")
-async def index(request: sanic.Request, path=""):
+async def index(request: sanic.Request):
     """
     we all gotta start somewhere
     """
-    return json({"message": "Hello, world.", "path": path})
+    return json({"message": "Hello, world.", "docs": "/docs"})
 
 @app.get("/chess")
 async def chess_board(request: sanic.Request):
