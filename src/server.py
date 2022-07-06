@@ -99,7 +99,7 @@ async def git_update(request: sanic.Request):
     parameters:
       - name: x-admin-key 
         in: header
-        description: lol
+        description: This needs to be correct.
         required: true
     """
     auth = request.headers.get("x-admin-key")
