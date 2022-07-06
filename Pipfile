@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 sanic = {extras = ["ext"], version = "*"}
+cd = "*"
 
 [dev-packages]
 
