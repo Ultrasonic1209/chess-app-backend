@@ -91,6 +91,11 @@ async def chess_move(request: sanic.Request):
 async def eyep(request: sanic.Request):
     """
     eyep
+
+    openapi:
+    ---
+    tags:
+      - misc
     """
     return json({
         "ip": request.remote_addr
@@ -108,6 +113,8 @@ async def git_update(request: sanic.Request):
         in: header
         description: This needs to be correct.
         required: true
+    tags:
+      - misc
     """
     auth = request.headers.get("x-admin-key")
 
