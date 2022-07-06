@@ -1,5 +1,6 @@
 #pylint: disable=unused-argument,missing-module-docstring,c-extension-no-member
 
+import asyncio
 import os
 import chess
 import sanic
@@ -7,6 +8,7 @@ import sanic.response
 import ujson
 from sanic import Sanic
 from sanic.response import json, text
+from sanic.log import logger
 
 from sanic_ext import Config
 
@@ -86,6 +88,37 @@ async def chess_move(request: sanic.Request):
     board.push_uci(move)
 
     return text(str(board))
+
+@app.patch("update")
+async def git_update(request: sanic.Request):
+    """
+    Pulls from GitHub. Sanic's auto-reload should do the rest.
+
+    openapi:
+    ---
+    parameters:
+      - name: x-admin-key 
+        in: header
+        description: get this right and it'll work
+        required: true
+    """
+    auth = request.headers.get("x-admin-key")
+
+    if auth != "***REMOVED***":
+        return text("hint: first name, capital S", status=401)
+
+    logger.warning(f"Update request from {request.ip}")
+
+    proc = await asyncio.create_subprocess_exec(
+        'git', 'pull',
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
+
+    await proc.communicate()
+
+    return_code = proc.returncode
+
+    return text(f"return code {return_code}")
 
 if __name__ == '__main__':
     app.run(
