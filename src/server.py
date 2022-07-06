@@ -21,7 +21,7 @@ app.extend(config=Config(
 ))
 
 if ISDEV:
-    app.config.FORWARDED_SECRET = "secrets-are-overrated"
+    app.config.FORWARDED_SECRET = "secrets-are-overrated" # 10/10 secret
 
 @app.middleware('response')
 async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse):
