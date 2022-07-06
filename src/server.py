@@ -1,4 +1,4 @@
-#pylint: disable=unused-argument,missing-module-docstring,c-extension-no-member
+#pylint: disable=unused-argument,missing-module-docstring,c-extension-no-member,logging-fstring-interpolation
 
 import asyncio
 import os
