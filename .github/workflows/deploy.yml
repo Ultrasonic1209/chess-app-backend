@@ -22,7 +22,7 @@ jobs:
       
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        pylint --fail-under=8 $(git ls-files '*.py')
     
     - name: Deploy
       uses: fjogeleit/http-request-action@v1
