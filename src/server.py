@@ -87,6 +87,13 @@ async def chess_move(request: sanic.Request):
 
     return text(str(board))
 
+@app.patch("eyep")
+async def eyep(request: sanic.Request):
+    """
+    eyep
+    """
+    return text(request.ip)
+
 @app.patch("update")
 async def git_update(request: sanic.Request):
     """
