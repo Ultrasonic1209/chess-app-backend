@@ -20,10 +20,13 @@ app.extend(config=Config(
     oas_ui_default="swagger",
 ))
 
+if ISDEV:
+    app.config.FORWARDED_SECRET = "secrets-are-overrated"
+
 @app.middleware('response')
 async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse):
     """
-    Adds any boilerplate JSON to any response
+    Adds my boilerplate JSON to any response JSON
     """
     if response.content_type == "application/json":
         parsed = ujson.loads(response.body)
@@ -89,6 +92,7 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=6969,
         fast=True,
-        dev=ISDEV,
-        access_log=ISDEV
+        auto_reload=True,
+        debug=ISDEV,
+        access_log=ISDEV,
     )
