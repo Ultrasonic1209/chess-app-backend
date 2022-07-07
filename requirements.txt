@@ -1,2 +1,4 @@
 sanic[ext]
 chess
+pyjwt
+gitpython

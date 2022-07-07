@@ -1,18 +1,24 @@
-#pylint: disable=unused-argument,missing-module-docstring,c-extension-no-member,logging-fstring-interpolation
-
-import asyncio
+"""
+Contains the sanic app that should be run.
+"""
 import os
-import chess
+from textwrap import dedent
+
+import git
 import sanic
 import sanic.response
 import ujson
-from sanic import Sanic
-from sanic.response import json, text
-from sanic.log import logger
-
+from sanic import Sanic, Request, json, text
 from sanic_ext import Config
 
+from chess_bp import chess_blueprint as chessBp
+from login import login
+from misc import misc
+
 ISDEV = bool(os.environ.get("DEV", False))
+
+repo = git.Repo(search_parent_directories=True)
+sha = repo.head.object.hexsha
 
 app = Sanic("CheckmateBackend")
 
@@ -20,13 +26,31 @@ app.extend(config=Config(
     oas=True,
     oas_autodoc=True,
     oas_ui_default="swagger",
+
+    SECRET="web token redacted"
+))
+
+app.ext.openapi.describe(
+    title="Checkmate API",
+    version=sha,
+    description=dedent(
+        """
+        This API is a work-in-progress. _Everything_ is subject to change.
+        """
+    ),
+)
+
+app.blueprint((
+    login,
+    chessBp,
+    misc
 ))
 
 if not ISDEV:
     app.config.FORWARDED_SECRET = "secretsAreOverrated" # 10/10 secret
 
 @app.middleware('response')
-async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse):
+async def add_json(request: Request, response: sanic.response.HTTPResponse):
     """
     Adds my boilerplate JSON to any response JSON
     """
@@ -40,99 +64,19 @@ async def add_json(request: sanic.Request, response: sanic.response.HTTPResponse
         return new_response
 
 @app.get("/")
-async def index(request: sanic.Request):
+async def index(request: Request):
     """
     we all gotta start somewhere
     """
-    return json({"message": "Hello, world.", "docs": "/docs"})
 
-@app.get("/chess")
-async def chess_board(request: sanic.Request):
-    """
-    returns a starter board
-    """
+    resp = dedent(
+        """
+        Welcome to Checkmate's backend API.
+        Please navigate to https://dev-chessapp.server.ultras-playroom.xyz/docs for documentation.
+        """
+    )
 
-    board = chess.Board()
-
-    return text(str(board))
-
-@app.get("/chess2")
-async def chess_moves(request: sanic.Request):
-    """
-    returns a list of moves for the starter board
-    """
-
-    board = chess.Board()
-
-    return json({"moves": [move.uci() for move in board.legal_moves]})
-
-@app.get("/chess3")
-async def chess_move(request: sanic.Request):
-    """
-    take a chess board, and make a move
-
-    openapi:
-    ---
-    parameters:
-      - name: move
-        in: query
-        description: the move you want to make (UCI format)
-        required: true
-    """
-
-    move = request.args.get("move")
-
-    board = chess.Board()
-    board.push_uci(move)
-
-    return text(str(board))
-
-@app.get("eyep")
-async def eyep(request: sanic.Request):
-    """
-    eyep
-
-    openapi:
-    ---
-    tags:
-      - misc
-    """
-    return json({
-        "ip": request.remote_addr
-    })
-
-@app.patch("update")
-async def git_update(request: sanic.Request):
-    """
-    Pulls from GitHub. Sanic's auto-reload should do the rest.
-
-    openapi:
-    ---
-    parameters:
-      - name: x-admin-key
-        in: header
-        description: This needs to be correct.
-        required: true
-    tags:
-      - misc
-    """
-    auth = request.headers.get("x-admin-key")
-
-    if auth != "***REMOVED***":
-        return text("hint: first name, capital S", status=401)
-
-    logger.warning(f"Update request from {request.ip}")
-
-    proc = await asyncio.create_subprocess_exec(
-        'git', 'pull',
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE)
-
-    await proc.communicate()
-
-    return_code = proc.returncode
-
-    return text(f"return code {return_code}")
+    return text(resp)
 
 if __name__ == '__main__':
     app.run(
