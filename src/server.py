@@ -5,7 +5,6 @@ import os
 from textwrap import dedent
 
 import git
-import sanic
 import sanic.response
 import ujson
 from sanic import Sanic, Request, json, text
@@ -27,6 +26,7 @@ app.extend(config=Config(
     oas_autodoc=True,
     oas_ui_default="swagger",
 
+    FC_SECRET="captcha token redacted", # this should be in an env var
     SECRET="web token redacted"
 ))
 

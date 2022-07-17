@@ -2,3 +2,4 @@ sanic[ext]
 chess
 pyjwt
 gitpython
+httpx
