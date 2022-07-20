@@ -26,7 +26,7 @@ app.extend(config=Config(
     oas_autodoc=True,
     oas_ui_default="swagger",
 
-    cors_origins="https://chessapp.ultras-playroom.xyz,https://*.chessapp.ultras-playroom.xyz/sign-in",
+    cors_origins="https://chessapp.ultras-playroom.xyz,https://dev.chessapp.ultras-playroom.xyz/sign-in",
     cors_supports_credentials=True,
 
     FC_SECRET="captcha token redacted", #should be in an env var
