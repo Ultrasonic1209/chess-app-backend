@@ -10,9 +10,6 @@ import ujson
 from sanic import Sanic, Request, json, text
 from sanic_ext import Config
 
-from cors import add_cors_headers
-from options import setup_options
-
 from chess_bp import chess_blueprint as chessBp
 from login import login
 from misc import misc
@@ -28,6 +25,9 @@ app.extend(config=Config(
     oas=True,
     oas_autodoc=True,
     oas_ui_default="swagger",
+
+    cors_origins="https://chessapp.ultras-playroom.xyz,https://*.chessapp.ultras-playroom.xyz/sign-in",
+    cors_supports_credentials=True,
 
     FC_SECRET="captcha token redacted", #should be in an env var
     SECRET="web token redacted"
@@ -81,12 +81,6 @@ async def index(request: Request):
 
     return text(resp)
 
-
-# Add OPTIONS handlers to any route that is missing it
-app.register_listener(setup_options, "before_server_start")
-
-# Fill in CORS headers
-app.register_middleware(add_cors_headers, "response")
 
 if __name__ == '__main__':
     app.run(
