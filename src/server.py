@@ -87,7 +87,7 @@ async def index(request: Request):
 
 
 if __name__ == '__main__':
-    app.run(
+    app.run( # poking around in the source, you can run app.make_coffee for coffee logo
         host='0.0.0.0',
         port=6969,
         fast=True,
