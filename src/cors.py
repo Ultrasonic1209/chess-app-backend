@@ -28,6 +28,6 @@ def add_cors_headers(request: Request, response: HTTPResponse):
     Adds CORS headers to all OPTIONS requests.
     """
     if request.method != "OPTIONS":
-        methods = [method for method in request.route.methods]
+        methods = tuple(request.route.methods)
         _add_cors_headers(response, methods)
  
