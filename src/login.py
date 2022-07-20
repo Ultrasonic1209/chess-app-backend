@@ -1,6 +1,7 @@
 """
 From https://sanic.dev/en/guide/how-to/authentication.html#login.py
-Captcha process influenced by https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pages/api/submitBasic.js
+Captcha process influenced by
+https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pages/api/submitBasic.js
 """
 import random
 import jwt

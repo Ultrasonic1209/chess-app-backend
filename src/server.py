@@ -29,7 +29,7 @@ app.extend(config=Config(
     oas_autodoc=True,
     oas_ui_default="swagger",
 
-    FC_SECRET="captcha token redacted", # this should be in an env var
+    FC_SECRET="captcha token redacted", #should be in an env var
     SECRET="web token redacted"
 ))
 
