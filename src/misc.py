@@ -34,7 +34,7 @@ async def git_update(request: Request):
     if auth != "***REMOVED***":
         return text("hint: first name, capital S", status=401)
 
-    logger.warning(f"Update request from {request.ip}")
+    logger.warning(f"Update request from {request.remote_addr}")
 
     proc = await asyncio.create_subprocess_exec(
         'git', 'pull',
