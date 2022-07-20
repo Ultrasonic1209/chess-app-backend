@@ -27,6 +27,7 @@ app.extend(config=Config(
     oas_ui_default="swagger",
 
     cors_origins=[
+        "https://apichessapp.server.ultras-playroom.xyz",
         "https://chessapp.ultras-playroom.xyz",
         "https://*.chessapp.ultras-playroom.xyz"
     ],
