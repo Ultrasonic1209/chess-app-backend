@@ -26,11 +26,11 @@ app.extend(config=Config(
     oas_autodoc=True,
     oas_ui_default="swagger",
 
-    CORS_ORIGINS=(
+    cors_origins=(
         "https://chessapp.ultras-playroom.xyz",
         "https://*.chessapp.ultras-playroom.xyz"
     ),
-    CORS_SUPPORTS_CREDENTIALS=True,
+    cors_supports_credentials=True,
 
     FC_SECRET="captcha token redacted", #should be in an env var
     SECRET="web token redacted"
