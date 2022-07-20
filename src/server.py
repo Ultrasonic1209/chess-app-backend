@@ -31,6 +31,7 @@ app.extend(config=Config(
         "https://*.chessapp.ultras-playroom.xyz"
     ],
     cors_supports_credentials=True,
+    cors_always_send=True,
 
     FC_SECRET="captcha token redacted", #should be in an env var
     SECRET="web token redacted"
