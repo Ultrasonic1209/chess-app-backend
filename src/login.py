@@ -88,7 +88,9 @@ async def do_login(request: Request, body: LoginBody):
 
     captcha_resp = await verify_captcha(given_solution, request.app.config.FC_SECRET)
 
-    user_facing_message = "Signing you in now..."
+    user_facing_message = "Signed you in! Redirecting..."
+
+    logger.info(captcha_resp)
 
     if captcha_resp.get("accept", False) is False:
 
