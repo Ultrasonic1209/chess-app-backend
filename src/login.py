@@ -32,6 +32,9 @@ async def verify_captcha(given_solution: str, fc_secret: str):
     """
     Takes FC solution and validates it
     """
+
+    logger.info(fc_secret)
+
     resp = await HTTPX_CLIENT.post(
         "https://api.friendlycaptcha.com/api/v1/siteverify",
         json={
