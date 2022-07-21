@@ -47,6 +47,8 @@ async def verify_captcha(given_solution: str, fc_secret: str):
 
     resp_body: dict = resp.json()
 
+    logger.info(resp_body)
+
     if resp.status_code == 200:
 
         toreturn = {
