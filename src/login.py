@@ -6,6 +6,7 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 import random
 import jwt
 import httpx
+from dataclasses import dataclass
 
 from sanic import Blueprint, Request, text, json
 from sanic.log import logger
@@ -16,6 +17,13 @@ from auth import protected
 HTTPX_CLIENT = httpx.AsyncClient()
 
 login = Blueprint("login", url_prefix="/login")
+
+@dataclass
+class FRCaptcha:
+    """
+    Validates /login for frcCaptchaSolution in a JSON dict.
+    """
+    frcCaptchaSolution: str
 
 
 async def verify_captcha(given_solution: str, fc_secret: str):
@@ -60,9 +68,7 @@ async def verify_captcha(given_solution: str, fc_secret: str):
         }
 
 @login.post("/")
-@validate(json={
-    "frcCaptchaSolution": str
-})
+@validate(json=FRCaptcha)
 async def do_login(request: Request):
     """
     Assigns JSON Web Token
