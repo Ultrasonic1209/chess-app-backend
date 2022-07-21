@@ -90,8 +90,6 @@ async def do_login(request: Request, body: LoginBody):
 
     user_facing_message = "Signed you in! Redirecting..."
 
-    logger.info(captcha_resp)
-
     if bool(captcha_resp.get("accept", False)) is False:
 
 
@@ -110,9 +108,6 @@ async def do_login(request: Request, body: LoginBody):
                 user_facing_message = "Expired captcha solution. Please refresh the page."
             case _:
                 user_facing_message = captcha_resp["errorCode"]
-
-        
-        logger.info(user_facing_message)
 
         return json({
             "accept": False,
