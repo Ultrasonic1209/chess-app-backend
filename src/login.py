@@ -26,6 +26,9 @@ class LoginBody:
     """
     # pylint: disable=invalid-name
     frcCaptchaSolution: str
+    username: str
+    password: str
+    rememberMe: bool
 
 
 async def verify_captcha(given_solution: str, fc_secret: str):
