@@ -114,13 +114,11 @@ async def do_login(request: Request, body: LoginBody):
             "userFacingMessage": user_facing_message
         })
 
-    expires: datetime = None
-    if body.rememberMe:
-        expires = datetime.now() + timedelta(weeks=4)
+    expires = (datetime.now() + timedelta(weeks=4)).timestamp() if body.rememberMe else None
 
     payload = {
         'user_id': random.randint(666,1337),
-        'expires': expires.timestamp()
+        'expires': expires
     }
 
 
@@ -139,7 +137,7 @@ async def do_login(request: Request, body: LoginBody):
     response.cookies[".CHECKMATESECRET"]["domain"] = ".ultras-playroom.xyz"
 
     if body.rememberMe:
-        response.cookies[".CHECKMATESECRET"]["expires"] = expires
+        response.cookies[".CHECKMATESECRET"]["expires"] = datetime.fromtimestamp(expires)
 
     return response
 
