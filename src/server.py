@@ -35,6 +35,7 @@ app.extend(config=Config(
     cors_allow_headers=["Authorization", "Content-Type"],
     cors_supports_credentials=True,
     cors_always_send=True,
+    cors_max_age=48,
 
     FC_SECRET=os.getenv("FRIENDLY_CAPTCHA_SECRET", ""),
     SECRET=os.getenv("JWT_SECRET", "")
