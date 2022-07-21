@@ -5,6 +5,7 @@ from functools import wraps
 
 import jwt
 from sanic import text
+from sanic.log import logger
 import sanic
 
 
@@ -17,6 +18,8 @@ def check_token(request: sanic.Request):
     token = request.cookies.get(".CHECKMATESECRET")
     if not token:
         return False
+
+    logger.info(token)
 
     try:
         jwt.decode(
