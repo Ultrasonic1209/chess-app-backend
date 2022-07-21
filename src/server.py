@@ -98,5 +98,5 @@ if __name__ == '__main__':
         fast=True,
         auto_reload=True,
         debug=ISDEV,
-        access_log=ISDEV,
+        access_log=True,
     )
