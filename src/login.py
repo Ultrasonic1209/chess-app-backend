@@ -144,7 +144,7 @@ async def do_login(request: Request, body: LoginBody):
     response.cookies[".CHECKMATESECRET"] = token
     response.cookies[".CHECKMATESECRET"]["secure"] = True
     response.cookies[".CHECKMATESECRET"]["samesite"] = "Lax"
-    #response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("origin", ""))
+    response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("authority", ""))
     response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
 
     if body.rememberMe:
