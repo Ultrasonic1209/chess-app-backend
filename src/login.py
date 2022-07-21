@@ -105,6 +105,8 @@ async def do_login(request: Request, body: LoginBody):
                 user_facing_message = "Invalid captcha solution."
             case "solution_timeout_or_duplicate":
                 user_facing_message = "Expired captcha solution. Please refresh the page."
+            case _:
+                user_facing_message = captcha_resp["errorCode"]
 
         return json({
             "accept": False,
