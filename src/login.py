@@ -47,8 +47,6 @@ async def verify_captcha(given_solution: str, fc_secret: str):
 
     resp_body: dict = resp.json()
 
-    logger.info(resp_body)
-
     if resp.status_code == 200:
 
         toreturn = {
@@ -93,6 +91,9 @@ async def do_login(request: Request, body: LoginBody):
     user_facing_message = "Signed you in! Redirecting..."
 
     logger.info(captcha_resp)
+    logger.info(bool(captcha_resp.get("accept", False)))
+    logger.info(bool(captcha_resp.get("accept", False)) == False)
+    logger.info(bool(captcha_resp.get("accept", False)) is False)
 
     if bool(captcha_resp.get("accept", False)) is False:
 
