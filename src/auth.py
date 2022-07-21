@@ -5,19 +5,22 @@ from functools import wraps
 
 import jwt
 from sanic import text
+import sanic
 
 
-def check_token(request):
+def check_token(request: sanic.Request):
     """
     Check a token.
     TODO figure out how it does that
     """
-    if not request.token:
+
+    token = request.cookies.get(".CHECKMATESECRET")
+    if not token:
         return False
 
     try:
         jwt.decode(
-            request.token, request.app.config.SECRET, algorithms=["HS256"]
+            token, request.app.config.SECRET, algorithms=["HS256"]
         )
     except jwt.exceptions.InvalidTokenError:
         return False
