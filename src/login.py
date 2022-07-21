@@ -50,7 +50,7 @@ async def verify_captcha(given_solution: str, fc_secret: str):
     if resp.status_code == 200:
 
         toreturn = {
-            "accept": resp_body["success"],
+            "accept": bool(resp_body["success"]),
             "errorCode": False
         }
         if "errorCode" in resp_body.keys():
@@ -89,8 +89,6 @@ async def do_login(request: Request, body: LoginBody):
     captcha_resp = await verify_captcha(given_solution, request.app.config.FC_SECRET)
 
     user_facing_message = "Signed you in! Redirecting..."
-
-    logger.info(captcha_resp)
 
     if captcha_resp.get("accept", False) is False:
 
