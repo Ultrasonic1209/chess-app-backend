@@ -3,10 +3,11 @@ From https://sanic.dev/en/guide/how-to/authentication.html#login.py
 Captcha process influenced by
 https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pages/api/submitBasic.js
 """
+
+from dataclasses import dataclass
 import random
 import jwt
 import httpx
-from dataclasses import dataclass
 
 from sanic import Blueprint, Request, text, json
 from sanic.log import logger
@@ -19,7 +20,7 @@ HTTPX_CLIENT = httpx.AsyncClient()
 login = Blueprint("login", url_prefix="/login")
 
 @dataclass
-class FRCaptcha:
+class LoginBody:
     """
     Validates /login for frcCaptchaSolution in a JSON dict.
     """
@@ -69,14 +70,14 @@ async def verify_captcha(given_solution: str, fc_secret: str):
         }
 
 @login.post("/")
-@validate(json=FRCaptcha)
-async def do_login(request: Request):
+@validate(json=LoginBody)
+async def do_login(request: Request, body: LoginBody):
     """
     Assigns JSON Web Token
     Captcha is provided by https://friendlycaptcha.com/
     """
 
-    given_solution = request.json["frcCaptchaSolution"]
+    given_solution = body.frcCaptchaSolution
 
     captcha_resp = await verify_captcha(given_solution, request.app.config.FC_SECRET)
     logger.info(captcha_resp)
