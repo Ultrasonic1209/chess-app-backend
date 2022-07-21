@@ -16,6 +16,16 @@ from sanic_ext import validate
 
 from auth import protected
 
+from urllib.parse import urlparse
+
+def get_hostname(url, uri_type='netloc_only'):
+    """Get the host name from the url"""
+    parsed_uri = urlparse(url)
+    if uri_type == 'both':
+        return '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
+    elif uri_type == 'netloc_only':
+        return '{uri.netloc}'.format(uri=parsed_uri)
+
 HTTPX_CLIENT = httpx.AsyncClient()
 
 login = Blueprint("login", url_prefix="/login")
@@ -134,7 +144,7 @@ async def do_login(request: Request, body: LoginBody):
     response.cookies[".CHECKMATESECRET"] = token
     response.cookies[".CHECKMATESECRET"]["secure"] = True
     response.cookies[".CHECKMATESECRET"]["samesite"] = "Lax"
-    #response.cookies[".CHECKMATESECRET"]["domain"] = "ultras-playroom.xyz"
+    response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("origin", ""))
     response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
 
     if body.rememberMe:
