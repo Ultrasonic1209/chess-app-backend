@@ -9,7 +9,7 @@ import random
 import jwt
 import httpx
 
-from sanic import Blueprint, Request, text, json
+from sanic import Blueprint, Request, json
 from sanic.log import logger
 from sanic_ext import validate
 

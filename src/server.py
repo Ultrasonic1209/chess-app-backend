@@ -3,6 +3,7 @@ Contains the sanic app that should be run.
 """
 import os
 from textwrap import dedent
+import re
 
 import git
 import sanic.response
@@ -30,11 +31,7 @@ app.extend(config=Config(
     oas_autodoc=True,
     oas_ui_default="swagger",
 
-    cors_origins=[
-        "https://apichessapp.server.ultras-playroom.xyz",
-        "https://chessapp.ultras-playroom.xyz",
-        "https://dev.chessapp.ultras-playroom.xyz"
-    ],
+    cors_origins=re.compile(r"(.*)ultras-playroom\.xyz$"),
     cors_allow_headers=["Authorization", "Content-Type"],
     cors_supports_credentials=True,
     cors_always_send=True,
