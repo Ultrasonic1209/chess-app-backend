@@ -120,7 +120,7 @@ async def do_login(request: Request, body: LoginBody):
 
     payload = {
         'user_id': random.randint(666,1337),
-        'expires': expires
+        'expires': expires.timestamp()
     }
 
 
