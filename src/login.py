@@ -55,7 +55,7 @@ async def verify_captcha(given_solution: str, fc_secret: str):
             "accept": bool(resp_body["success"]),
             "errorCode": False
         }
-        if "errorCode" in resp_body.keys():
+        if "errors" in resp_body.keys():
             toreturn["errorCode"] = resp_body["errors"][0]
 
         return toreturn
@@ -92,7 +92,10 @@ async def do_login(request: Request, body: LoginBody):
 
     user_facing_message = "Signed you in! Redirecting..."
 
+    logger.info(captcha_resp)
+
     if bool(captcha_resp.get("accept", False)) is False:
+
 
         match captcha_resp["errorCode"]:
             case "secret_missing":
