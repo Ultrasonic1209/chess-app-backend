@@ -6,12 +6,9 @@ from textwrap import dedent
 import re
 
 import git
-import sanic.response
-import ujson
 from dotenv import load_dotenv
 
-from sanic import Sanic, Request, json, text
-from sanic.log import logger
+from sanic import Sanic, Request, text
 from sanic_ext import Config
 
 from chess_bp import chess_blueprint as chessBp
@@ -34,6 +31,7 @@ app.extend(config=Config(
 
     cors_origins=re.compile(r"^(.*)ultras-playroom\.xyz"),
     cors_supports_credentials=True,
+    cors_allow_headers=["content-type"],
     cors_always_send=True,
     cors_max_age=48,
 

@@ -7,6 +7,7 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import random
+from urllib.parse import urlparse
 import jwt
 import httpx
 
@@ -16,15 +17,14 @@ from sanic_ext import validate
 
 from auth import protected
 
-from urllib.parse import urlparse
-
 def get_hostname(url, uri_type='netloc_only'):
     """Get the host name from the url"""
     parsed_uri = urlparse(url)
     if uri_type == 'both':
         return '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
-    elif uri_type == 'netloc_only':
-        return '{uri.netloc}'.format(uri=parsed_uri)
+    if uri_type == 'netloc_only':
+        return parsed_uri.netloc
+    return ''
 
 HTTPX_CLIENT = httpx.AsyncClient()
 
