@@ -80,6 +80,8 @@ async def do_login(request: Request):
     Assigns JSON Web Token
     """
 
+    logger.info(request.json)
+
     payload = {
         'user_id': random.randint(666,1337)
     }
