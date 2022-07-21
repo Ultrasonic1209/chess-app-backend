@@ -49,7 +49,6 @@ async def verify_captcha(given_solution: str, fc_secret: str):
         toreturn = {
             "accept": resp_body["success"]
         }
-        
         if "errorCode" in resp_body.keys():
             toreturn["errorCode"] = resp_body["errors"][0]
 
