@@ -33,7 +33,7 @@ app.extend(config=Config(
     cors_origins=[
         "https://apichessapp.server.ultras-playroom.xyz",
         "https://chessapp.ultras-playroom.xyz",
-        "https://*.chessapp.ultras-playroom.xyz"
+        "https://dev.chessapp.ultras-playroom.xyz"
     ],
     cors_supports_credentials=True,
     cors_always_send=True,
