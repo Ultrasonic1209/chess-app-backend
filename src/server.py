@@ -64,19 +64,19 @@ if not ISDEV:
 async def display(request: Request):
     logger.info(request.head.decode())
 
-@app.middleware('response')
-async def add_json(request: Request, response: sanic.response.HTTPResponse):
-    """
-    Adds my boilerplate JSON to any response JSON
-    """
-    if response.content_type == "application/json":
-        parsed = ujson.loads(response.body)
+#@app.middleware('response')
+#async def add_json(request: Request, response: sanic.response.HTTPResponse):
+#    """
+#    Adds my boilerplate JSON to any response JSON (mainly as an experiment)
+#    """
+#    if response.content_type == "application/json":
+#        parsed = ujson.loads(response.body)
 
-        parsed["chess"] = "cool"
+#        parsed["chess"] = "cool"
+#
+#        new_response = json(parsed, status=response.status, headers=response.headers)
 
-        new_response = json(parsed, status=response.status, headers=response.headers)
-
-        return new_response
+#        return new_response
 
 #@app.middleware('response')
 #async def add_cors_response(request: Request, response: sanic.response.HTTPResponse):
@@ -107,7 +107,7 @@ async def index(request: Request):
 
 
 if __name__ == '__main__':
-    app.run( # poking around in the source, you can run app.make_coffee for coffee logo
+    app.run( # app.make_coffee is also a thing somehow lol
         host='0.0.0.0',
         port=6969,
         fast=True,
