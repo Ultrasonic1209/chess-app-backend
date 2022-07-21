@@ -7,6 +7,8 @@ from textwrap import dedent
 import git
 import sanic.response
 import ujson
+from dotenv import load_dotenv
+
 from sanic import Sanic, Request, json, text
 from sanic_ext import Config
 
@@ -14,7 +16,9 @@ from chess_bp import chess_blueprint as chessBp
 from login import login
 from misc import misc
 
-ISDEV = bool(os.environ.get("DEV", False))
+load_dotenv()
+
+ISDEV = bool(os.getenv("DEV"))
 
 repo = git.Repo(search_parent_directories=True)
 sha = repo.head.object.hexsha
@@ -34,8 +38,8 @@ app.extend(config=Config(
     cors_supports_credentials=True,
     cors_always_send=True,
 
-    FC_SECRET="captcha token redacted", #should be in an env var
-    SECRET="web token redacted"
+    FC_SECRET=os.getenv("FRIENDLY_CAPTCHA_SECRET", ""),
+    SECRET=os.getenv("JWT_SECRET", "")
 ))
 
 app.ext.openapi.describe(

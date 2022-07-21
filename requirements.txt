@@ -3,3 +3,4 @@ chess
 pyjwt
 gitpython
 httpx
+python-dotenv
