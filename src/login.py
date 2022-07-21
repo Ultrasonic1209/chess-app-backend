@@ -158,8 +158,11 @@ async def identify(request: Request):
     """
     Returns the profile you are authenticating as.
     """
+
+    token = request.cookies.get(".CHECKMATESECRET", "")
+
     profile = jwt.decode(
-        request.token, request.app.config.SECRET, algorithms=["HS256"]
+        token, request.app.config.SECRET, algorithms=["HS256"]
     )
 
     return json({"payload": profile})
