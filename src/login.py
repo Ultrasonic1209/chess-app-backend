@@ -33,8 +33,6 @@ async def verify_captcha(given_solution: str, fc_secret: str):
     Takes FC solution and validates it
     """
 
-    logger.info(fc_secret)
-
     resp = await HTTPX_CLIENT.post(
         "https://api.friendlycaptcha.com/api/v1/siteverify",
         json={
@@ -44,15 +42,18 @@ async def verify_captcha(given_solution: str, fc_secret: str):
         }
     )
 
-    resp_body = resp.json()
-
-    logger.info(resp_body)
+    resp_body: dict = resp.json()
 
     if resp.status_code == 200:
-        return {
-            "accept": resp_body["success"],
-            "errorCode": resp_body["errors"][0]
+
+        toreturn = {
+            "accept": resp_body["success"]
         }
+        
+        if "errorCode" in resp_body.keys():
+            toreturn["errorCode"] = resp_body["errors"][0]
+
+        return toreturn
     elif resp.status_code in [400, 401]:
         logger.error(
             "Could not verify Friendly Captcha solution due to client error:\n%s",
@@ -83,6 +84,7 @@ async def do_login(request: Request, body: LoginBody):
     given_solution = body.frcCaptchaSolution
 
     captcha_resp = await verify_captcha(given_solution, request.app.config.FC_SECRET)
+
     logger.info(captcha_resp)
 
     payload = {
