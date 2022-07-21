@@ -32,7 +32,6 @@ app.extend(config=Config(
     oas_ui_default="swagger",
 
     cors_origins=re.compile(r"^(.*)ultras-playroom\.xyz"),
-    cors_allow_headers=["Authorization", "Content-Type"],
     cors_supports_credentials=True,
     cors_always_send=True,
     cors_max_age=48,
