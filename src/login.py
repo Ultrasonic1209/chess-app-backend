@@ -134,7 +134,7 @@ async def do_login(request: Request, body: LoginBody):
     response.cookies[".CHECKMATESECRET"] = token
     response.cookies[".CHECKMATESECRET"]["secure"] = True
     response.cookies[".CHECKMATESECRET"]["samesite"] = "Lax"
-    response.cookies[".CHECKMATESECRET"]["domain"] = "ultras-playroom.xyz"
+    #response.cookies[".CHECKMATESECRET"]["domain"] = "ultras-playroom.xyz"
     response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
 
     if body.rememberMe:
