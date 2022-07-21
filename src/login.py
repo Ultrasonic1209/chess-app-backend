@@ -23,6 +23,7 @@ class FRCaptcha:
     """
     Validates /login for frcCaptchaSolution in a JSON dict.
     """
+    # pylint: disable=invalid-name
     frcCaptchaSolution: str
 
 
