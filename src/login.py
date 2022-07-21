@@ -15,7 +15,7 @@ from sanic import Blueprint, Request, json
 from sanic.log import logger
 from sanic_ext import validate
 
-from auth import protected
+from auth import protected, Profile
 
 def get_hostname(url, uri_type='netloc_only'):
     """Get the host name from the url"""
@@ -154,15 +154,9 @@ async def do_login(request: Request, body: LoginBody):
 
 @login.get("/identify")
 @protected
-async def identify(request: Request):
+async def identify(request: Request, profile: Profile):
     """
     Returns the profile you are authenticating as.
     """
-
-    token = request.cookies.get(".CHECKMATESECRET", "")
-
-    profile = jwt.decode(
-        token, request.app.config.SECRET, algorithms=["HS256"]
-    )
 
     return json({"payload": profile})
