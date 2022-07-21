@@ -92,7 +92,6 @@ async def do_login(request: Request, body: LoginBody):
 
     if bool(captcha_resp.get("accept", False)) is False:
 
-
         match captcha_resp["errorCode"]:
             case "secret_missing":
                 user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
