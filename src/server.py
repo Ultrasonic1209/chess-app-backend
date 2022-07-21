@@ -85,7 +85,7 @@ async def add_json(request: Request, response: sanic.response.HTTPResponse):
 #    """
 #    if ((request.method.upper() != "OPTIONS") and
 #        (response.headers.get("Access-Control-Allow-Origin") is None) and
-#        (app.config.CORS_ORIGINS.match(request.headers.get("Origin")))):
+#        (app.config.CORS_ORIGINS.match(request.headers.get("Origin", "")))):
 #        response.headers["Access-Control-Allow-Origin"] = request.headers["Origin"]
 
 #        return response
