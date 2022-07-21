@@ -5,6 +5,7 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 """
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 import random
 import jwt
 import httpx
@@ -113,9 +114,15 @@ async def do_login(request: Request, body: LoginBody):
             "userFacingMessage": user_facing_message
         })
 
+    expires: datetime = None
+    if body.rememberMe:
+        expires = datetime.now() + timedelta(weeks=4)
+
     payload = {
-        'user_id': random.randint(666,1337)
+        'user_id': random.randint(666,1337),
+        'expires': expires
     }
+
 
     response = json(
         {
@@ -129,6 +136,10 @@ async def do_login(request: Request, body: LoginBody):
     response.cookies[".CHECKMATESECRET"] = token
     response.cookies[".CHECKMATESECRET"]["secure"] = True
     response.cookies[".CHECKMATESECRET"]["samesite"] = "Strict"
+    response.cookies[".CHECKMATESECRET"]["domain"] = ".ultras-playroom.xyz"
+
+    if body.rememberMe:
+        response.cookies[".CHECKMATESECRET"]["expires"] = expires
 
     return response
 
