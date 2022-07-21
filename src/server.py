@@ -35,7 +35,7 @@ app.extend(config=Config(
         "https://chessapp.ultras-playroom.xyz",
         "https://dev.chessapp.ultras-playroom.xyz"
     ],
-    cors_allow_headers=["Authorization"],
+    cors_allow_headers=["Authorization", "Content-Type"],
     cors_expose_headers=["Authorization"],
     cors_supports_credentials=True,
     cors_always_send=True,
