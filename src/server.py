@@ -31,7 +31,7 @@ app.extend(config=Config(
     oas_autodoc=True,
     oas_ui_default="swagger",
 
-    cors_origins=re.compile(r"(.*)ultras-playroom\.xyz$"),
+    cors_origins=re.compile(r"^(.*)ultras-playroom\.xyz"),
     cors_allow_headers=["Authorization", "Content-Type"],
     cors_supports_credentials=True,
     cors_always_send=True,
@@ -73,18 +73,6 @@ async def add_json(request: Request, response: sanic.response.HTTPResponse):
         new_response = json(parsed, status=response.status, headers=response.headers)
 
         return new_response
-
-@app.middleware('response')
-async def add_cors_response(request: Request, response: sanic.response.HTTPResponse):
-    """
-    Adds CORS headers to non-OPTIONS responses
-    """
-    if ((request.method.upper() != "OPTIONS") and
-        (response.headers.get("Access-Control-Allow-Origin") is None) and
-        (app.config.CORS_ORIGINS.match(request.headers.get("Origin")))):
-        response.headers["Access-Control-Allow-Origin"] = request.headers["Origin"]
-
-        return response
 
 
 @app.get("/")
