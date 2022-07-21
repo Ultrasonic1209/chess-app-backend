@@ -24,11 +24,11 @@ class LoginBody:
     """
     Validates /login for frcCaptchaSolution in a JSON dict.
     """
-    # pylint: disable=invalid-name
-    frcCaptchaSolution: str
     username: str
     password: str
+    # pylint: disable=invalid-name
     rememberMe: bool
+    frcCaptchaSolution: str
 
 
 async def verify_captcha(given_solution: str, fc_secret: str):
@@ -50,7 +50,8 @@ async def verify_captcha(given_solution: str, fc_secret: str):
     if resp.status_code == 200:
 
         toreturn = {
-            "accept": resp_body["success"]
+            "accept": resp_body["success"],
+            "errorCode": False
         }
         if "errorCode" in resp_body.keys():
             toreturn["errorCode"] = resp_body["errors"][0]
@@ -87,14 +88,47 @@ async def do_login(request: Request, body: LoginBody):
 
     captcha_resp = await verify_captcha(given_solution, request.app.config.FC_SECRET)
 
-    logger.info(captcha_resp)
+    user_facing_message = "Signing you in now..."
+
+    if not captcha_resp["accept"]:
+
+        match captcha_resp["errorCode"]:
+            case "secret_missing":
+                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
+            case "secret_invalid":
+                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
+            case "solution_missing":
+                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
+            case "bad_request":
+                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
+            case "solution_invalid":
+                user_facing_message = "Invalid captcha solution."
+            case "solution_timeout_or_duplicate":
+                user_facing_message = "Expired captcha solution. Please refresh the page."
+
+        return json({
+            "accept": False,
+            "userFacingMessage": user_facing_message
+        })
 
     payload = {
         'user_id': random.randint(666,1337)
     }
 
+    response = json(
+        {
+            "accept": True,
+            "userFacingMessage": user_facing_message
+        }
+    )
+
     token = jwt.encode(payload, request.app.config.SECRET)
-    return text(token)
+
+    response.cookies[".CHECKMATESECRET"] = token
+    response.cookies[".CHECKMATESECRET"]["secure"] = True
+    response.cookies[".CHECKMATESECRET"]["samesite"] = "Strict"
+
+    return response
 
 @login.get("/identify")
 @protected
@@ -107,4 +141,3 @@ async def identify(request: Request):
     )
 
     return json({"payload": profile})
-    
