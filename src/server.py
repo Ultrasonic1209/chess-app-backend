@@ -74,17 +74,6 @@ async def add_json(request: Request, response: sanic.response.HTTPResponse):
 
         return new_response
 
-@app.middleware('response')
-async def add_cors_response(request: Request, response: sanic.response.HTTPResponse):
-    """
-    Adds CORS headers to non-OPTIONS responses
-    """
-    if (response.status == 204) and (response.headers.get("Access-Control-Allow-Origin") is None) and (app.config.CORS_ORIGINS.match(request.headers["Origin"])):
-        response.headers["Access-Control-Allow-Origin"] = request.headers["Origin"]
-
-        return response
-
-
 @app.get("/")
 async def index(request: Request):
     """
