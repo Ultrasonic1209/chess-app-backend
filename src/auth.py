@@ -23,7 +23,9 @@ def check_token(request: sanic.Request):
 
     try:
         jwt.decode(
-            token, request.app.config.SECRET, algorithms=["HS256"]
+            jwt=token,
+            key=request.app.config.SECRET,
+            algorithms=["HS256"]
         )
     except jwt.exceptions.InvalidTokenError:
         return False
