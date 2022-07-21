@@ -90,7 +90,7 @@ async def do_login(request: Request, body: LoginBody):
 
     user_facing_message = "Signed you in! Redirecting..."
 
-    if captcha_resp.get("accept", False) is False:
+    if bool(captcha_resp.get("accept", False)) is False:
 
         match captcha_resp["errorCode"]:
             case "secret_missing":
