@@ -4,3 +4,5 @@ pyjwt
 gitpython
 httpx
 python-dotenv
+asyncmy
+sqlalchemy

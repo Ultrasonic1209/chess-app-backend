@@ -1,12 +1,17 @@
 """
 Contains the sanic app that should be run.
 """
+from contextvars import ContextVar
 import os
 from textwrap import dedent
 import re
 
 import git
 from dotenv import load_dotenv
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from sanic import Sanic, Request, text
 from sanic_ext import Config
@@ -55,8 +60,37 @@ app.blueprint((
     misc
 ))
 
+sqlpass = os.getenv("SQL_PASSWORD", "")
+
+bind = create_async_engine(
+    f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
+    echo=True
+)
+
 if not ISDEV:
-    app.config.FORWARDED_SECRET = "secretsAreOverrated" # 10/10 secret
+    app.config.FORWARDED_SECRET = os.getenv("FORWARDED_SECRET", "")
+
+_base_model_session_ctx = ContextVar("session")
+
+@app.middleware("request")
+async def inject_session(request: Request):
+    """
+    Adds a SQL session to the request's context
+    From https://sanic.dev/en/guide/how-to/orm.html#sqlalchemy
+    """
+    request.ctx.session = sessionmaker(bind, AsyncSession, expire_on_commit=False)()
+    request.ctx.session_ctx_token = _base_model_session_ctx.set(request.ctx.session)
+
+
+@app.middleware("response")
+async def close_session(request: Request, response):
+    """
+    Cleans the SQL session up
+    From https://sanic.dev/en/guide/how-to/orm.html#sqlalchemy
+    """
+    if hasattr(request.ctx, "session_ctx_token"):
+        _base_model_session_ctx.reset(request.ctx.session_ctx_token)
+        await request.ctx.session.close()
 
 @app.get("/")
 async def index(request: Request):
@@ -79,7 +113,7 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=6969,
         fast=True,
-        auto_reload=True,
+        auto_reload=(not ISDEV), # crashed my codespace
         debug=ISDEV,
         access_log=True,
     )
