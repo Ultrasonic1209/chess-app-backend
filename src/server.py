@@ -9,11 +9,12 @@ import re
 import git
 from dotenv import load_dotenv
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import inspect
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 
-from sanic import Sanic, Request, text
+from sanic import Sanic, Request, json, text
 from sanic_ext import Config
 
 from chess_bp import chess_blueprint as chessBp
@@ -91,6 +92,21 @@ async def close_session(request: Request, response):
     if hasattr(request.ctx, "session_ctx_token"):
         _base_model_session_ctx.reset(request.ctx.session_ctx_token)
         await request.ctx.session.close()
+
+@app.get("/sql")
+async def sql(request: Request):
+    """
+    lists all tables.
+    TODO https://docs.sqlalchemy.org/en/14/tutorial/metadata.html
+    """
+    session: AsyncSession = request.ctx.session
+    conn: AsyncConnection = await session.connection()
+
+    tables = await conn.run_sync(
+        lambda sync_conn: inspect(sync_conn).get_table_names()
+    )
+    return json(tables)
+
 
 @app.get("/")
 async def index(request: Request):
