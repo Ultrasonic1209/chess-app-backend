@@ -10,9 +10,8 @@ import git
 from dotenv import load_dotenv
 
 from sqlalchemy import inspect
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 
 from sanic import Sanic, Request, json, text
 from sanic_ext import Config

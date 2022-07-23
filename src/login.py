@@ -150,6 +150,11 @@ async def do_login(request: Request, body: LoginBody):
     if body.rememberMe:
         response.cookies[".CHECKMATESECRET"]["expires"] = datetime.fromtimestamp(expires)
 
+    response.headers["location"] = request.headers.get(
+        "origin",
+        "https://chessapp.ultras-playroom.xyz/"
+    )
+
     return response
 
 @login.get("/identify")
