@@ -25,7 +25,7 @@ class User(BaseModel):
     username = Column(String(50))
     password = Column(String(64))
     email = Column(String(100), nullable=True)
-    timeCreated = Column(TIMESTAMP())
+    time_created = Column(TIMESTAMP())
 
     def to_dict(self):
         """
@@ -43,7 +43,7 @@ class Player(BaseModel):
     user_id = Column(ForeignKey("Person.user_id"), primary_key=True)
     game_id = Column(ForeignKey("Game.game_id"), primary_key=True)
 
-    isWhite = Column(BOOLEAN())
+    is_white = Column(BOOLEAN())
 
 class Game(BaseModel):
     """
@@ -54,6 +54,6 @@ class Game(BaseModel):
     game_id = Column(INTEGER(), primary_key=True)
 
     moves = Column(String(90), nullable=True)
-    timeStarted = Column(TIMESTAMP())
-    timeEnded = Column(TIMESTAMP(), nullable=True)
-    whiteWon = Column(BOOLEAN(), nullable=True)
+    time_started = Column(TIMESTAMP())
+    time_ended = Column(TIMESTAMP(), nullable=True)
+    white_won = Column(BOOLEAN(), nullable=True)
