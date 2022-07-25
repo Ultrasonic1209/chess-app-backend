@@ -37,7 +37,7 @@ class User(BaseModel):
 
     user_id = Column(INTEGER(), primary_key=True)
 
-    username = Column(String(50), nullable=False)
+    username = Column(String(50), nullable=False, unique=True)
     password = Column(String(64), nullable=False)
     email = Column(String(100), nullable=True)
     time_created = Column(TIMESTAMP(), nullable=False)
