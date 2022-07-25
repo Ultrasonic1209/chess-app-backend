@@ -9,7 +9,7 @@ import re
 import git
 from dotenv import load_dotenv
 
-from sqlalchemy import inspect, insert, values
+from sqlalchemy import inspect
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
