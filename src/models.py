@@ -2,7 +2,10 @@
 Represents the database as a bunch of Python objects.
 """
 from sqlalchemy import BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
+
+from sqlalchemy import MetaData
+metadata_obj = MetaData()
 
 Base = declarative_base()
 
@@ -12,6 +15,12 @@ class BaseModel(Base):
     Base Model
     """
     __abstract__ = True
+
+    def to_dict(self):
+        """
+        Converts the user from an SQL object to a Python dictionary.
+        """
+        return {}
 
 
 class User(BaseModel):
@@ -27,11 +36,10 @@ class User(BaseModel):
     email = Column(String(100), nullable=True)
     time_created = Column(TIMESTAMP())
 
+    user_players = relationship("Player", back_populates="user")
+
     def to_dict(self):
-        """
-        Converts the user from an SQL object to a Python dictionary.
-        """
-        return {"name": self.username, "email": self.email, "timeCreated": self.timeCreated}
+        return {"name": self.username, "email": self.email, "timeCreated": self.time_created}
 
 
 class Player(BaseModel):
@@ -45,6 +53,12 @@ class Player(BaseModel):
 
     is_white = Column(BOOLEAN())
 
+    user = relationship("User", back_populates="user_players")
+    game = relationship("Game", back_populates="players")
+
+    def to_dict(self):
+        return {"user_id": self.user_id, "game_id": self.game_id, "is_white": self.is_white}
+
 class Game(BaseModel):
     """
     Each chess game has one game. (lol)
@@ -57,3 +71,8 @@ class Game(BaseModel):
     time_started = Column(TIMESTAMP())
     time_ended = Column(TIMESTAMP(), nullable=True)
     white_won = Column(BOOLEAN(), nullable=True)
+
+    players = relationship("Player", back_populates="game")
+
+    def to_dict(self):
+        return {"game_id": self.game_id, "time_started": self.time_started, "time_ended": self.time_ended, "white_won": self.white_won}
