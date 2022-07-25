@@ -9,7 +9,7 @@ import re
 import git
 from dotenv import load_dotenv
 
-from sqlalchemy import inspect
+from sqlalchemy import inspect, insert, values
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -19,6 +19,8 @@ from sanic_ext import Config
 from chess_bp import chess_blueprint as chessBp
 from login import login
 from misc import misc
+
+import models
 
 load_dotenv()
 
@@ -64,7 +66,8 @@ sqlpass = os.getenv("SQL_PASSWORD", "")
 
 bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
-    echo=True
+    echo=True,
+    pool_pre_ping=True,
 )
 
 if not ISDEV:
@@ -105,6 +108,38 @@ async def sql(request: Request):
         lambda sync_conn: inspect(sync_conn).get_table_names()
     )
     return json(tables)
+
+@app.patch("/sql/initalise")
+async def sql_initalise(request: Request):
+    """
+    resets the database.
+
+    openapi:
+    ---
+    parameters:
+      - name: x-admin-key
+        in: header
+        description: This needs to be correct.
+        required: true
+    """
+    auth = request.headers.get("x-admin-key")
+
+    if auth != "***REMOVED***":
+        return text("hint: first name, capital S", status=401)
+
+    session: AsyncSession = request.ctx.session
+    conn: AsyncConnection = await session.connection()
+
+    await conn.run_sync(models.Base.metadata.drop_all)
+    await conn.run_sync(models.Base.metadata.create_all)
+
+    user = models.User(username="yourMom", password="ha", email="hahaha@lol.com")
+
+    session.add(user)
+
+    await session.commit()
+
+    return text("done!")
 
 
 @app.get("/")

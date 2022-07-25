@@ -7,8 +7,14 @@ from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import MetaData
 metadata_obj = MetaData()
 
-Base = declarative_base()
+__all__ = [
+    'Base',
+    'User',
+    'Player',
+    'Game'
+]
 
+Base = declarative_base()
 
 class BaseModel(Base):
     """
@@ -31,10 +37,10 @@ class User(BaseModel):
 
     user_id = Column(INTEGER(), primary_key=True)
 
-    username = Column(String(50))
-    password = Column(String(64))
+    username = Column(String(50), nullable=False)
+    password = Column(String(64), nullable=False)
     email = Column(String(100), nullable=True)
-    time_created = Column(TIMESTAMP())
+    time_created = Column(TIMESTAMP(), nullable=False)
 
     user_players = relationship("Player", back_populates="user")
 
@@ -48,10 +54,10 @@ class Player(BaseModel):
     """
     __tablename__ = "Player"
 
-    user_id = Column(ForeignKey("Person.user_id"), primary_key=True)
+    user_id = Column(ForeignKey("User.user_id"), primary_key=True)
     game_id = Column(ForeignKey("Game.game_id"), primary_key=True)
 
-    is_white = Column(BOOLEAN())
+    is_white = Column(BOOLEAN(), nullable=False)
 
     user = relationship("User", back_populates="user_players")
     game = relationship("Game", back_populates="players")
@@ -68,7 +74,7 @@ class Game(BaseModel):
     game_id = Column(INTEGER(), primary_key=True)
 
     moves = Column(String(90), nullable=True)
-    time_started = Column(TIMESTAMP())
+    time_started = Column(TIMESTAMP(), nullable=False)
     time_ended = Column(TIMESTAMP(), nullable=True)
     white_won = Column(BOOLEAN(), nullable=True)
 
