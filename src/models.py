@@ -5,21 +5,23 @@ from sqlalchemy import BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
 from sqlalchemy.orm import declarative_base, relationship
 
 from sqlalchemy import MetaData
+
+from sqlalchemy_utils import PasswordType, EmailType, force_auto_coercion
+
+force_auto_coercion()
+
 metadata_obj = MetaData()
 
-__all__ = [
-    'Base',
-    'User',
-    'Player',
-    'Game'
-]
+__all__ = ["Base", "User", "Player", "Game"]
 
 Base = declarative_base()
+
 
 class BaseModel(Base):
     """
     Base Model
     """
+
     __abstract__ = True
 
     def to_dict(self):
@@ -33,25 +35,33 @@ class User(BaseModel):
     """
     Each Checkmate user account has this.
     """
+
     __tablename__ = "User"
 
     user_id = Column(INTEGER(), primary_key=True)
 
     username = Column(String(50), nullable=False, unique=True)
-    password = Column(String(64), nullable=False)
-    email = Column(String(100), nullable=True)
+    password = Column(
+        PasswordType(schemes=["pbkdf2_sha512"]), nullable=False
+    )
+    email = Column(EmailType(length=100), nullable=True)
     time_created = Column(TIMESTAMP(), nullable=False)
 
     user_players = relationship("Player", back_populates="user")
 
     def to_dict(self):
-        return {"name": self.username, "email": self.email, "timeCreated": self.time_created}
+        return {
+            "name": self.username,
+            "email": self.email,
+            "timeCreated": self.time_created,
+        }
 
 
 class Player(BaseModel):
     """
     Each chess game has two players.
     """
+
     __tablename__ = "Player"
 
     user_id = Column(ForeignKey("User.user_id"), primary_key=True)
@@ -63,12 +73,18 @@ class Player(BaseModel):
     game = relationship("Game", back_populates="players")
 
     def to_dict(self):
-        return {"user_id": self.user_id, "game_id": self.game_id, "is_white": self.is_white}
+        return {
+            "user_id": self.user_id,
+            "game_id": self.game_id,
+            "is_white": self.is_white,
+        }
+
 
 class Game(BaseModel):
     """
     Each chess game has one game. (lol)
     """
+
     __tablename__ = "Game"
 
     game_id = Column(INTEGER(), primary_key=True)
@@ -81,4 +97,9 @@ class Game(BaseModel):
     players = relationship("Player", back_populates="game")
 
     def to_dict(self):
-        return {"game_id": self.game_id, "time_started": self.time_started, "time_ended": self.time_ended, "white_won": self.white_won}
+        return {
+            "game_id": self.game_id,
+            "time_started": self.time_started,
+            "time_ended": self.time_ended,
+            "white_won": self.white_won,
+        }

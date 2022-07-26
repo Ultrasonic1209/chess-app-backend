@@ -5,13 +5,15 @@ from contextvars import ContextVar
 import os
 from textwrap import dedent
 import re
+from typing import Optional
 
 import git
 from dotenv import load_dotenv
 
-from sqlalchemy import inspect
+from sqlalchemy import inspect, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine import CursorResult
 
 from sanic import Sanic, Request, json, text
 from sanic_ext import Config
@@ -133,13 +135,65 @@ async def sql_initalise(request: Request):
     await conn.run_sync(models.Base.metadata.drop_all)
     await conn.run_sync(models.Base.metadata.create_all)
 
-    user = models.User(username="yourMom", password="ha", email="hahaha@lol.com")
+    user = models.User()
+
+    user.username = "bar"
+    user.password = "ha"
+    user.email = "email@example.com"
 
     session.add(user)
 
     await session.commit()
 
+    assert user.password == "ha"
+
     return text("done!")
+
+@app.post("/sql/auth")
+async def sql_auth(request: Request):
+    """
+    test account: username `bar` password `ha`
+
+    openapi:
+    ---
+    parameters:
+      - name: username
+        in: query
+        description: username!
+        required: true
+
+      - name: password
+        in: query
+        description: password.
+        required: true
+    """
+
+    session: AsyncSession = request.ctx.session
+
+    username = request.args['username'][0]
+    password = request.args['password'][0]
+
+    stmt = select(models.User).where(
+        models.User.username == username
+    )
+
+    resp: CursorResult = await session.execute(stmt)
+
+    row = resp.first()
+
+    if row is None:
+        # account not found
+        return text("Invalid username or password.")
+
+    user: models.User = row["User"]
+
+    if user.password != password:
+        # password incorrect
+        return text("Invalid username or password.")
+
+    return text(f"Logged in! User ID: {user.user_id}")
+
+
 
 
 @app.get("/")

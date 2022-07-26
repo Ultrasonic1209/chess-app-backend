@@ -6,3 +6,5 @@ httpx
 python-dotenv
 asyncmy
 sqlalchemy
+sqlalchemy_utils
+passlib
