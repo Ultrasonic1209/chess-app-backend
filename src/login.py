@@ -135,8 +135,8 @@ async def do_login(request: Request, body: LoginBody):
 
     session: AsyncSession = request.ctx.session
 
-    username = request.args['username'][0]
-    password = request.args['password'][0]
+    username = body.username
+    password = body.password
 
     stmt = select(models.User).where(
         models.User.username == username
