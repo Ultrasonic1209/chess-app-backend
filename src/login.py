@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import CursorResult
 
-from auth import protected, Profile
+from auth import protected
 
 import models
 
