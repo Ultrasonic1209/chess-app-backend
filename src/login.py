@@ -196,9 +196,9 @@ async def do_login(request: Request, body: LoginBody):
 
 @login.get("/identify")
 @protected
-async def identify(request: Request, profile: Profile):
+async def identify(request: Request, profile: models.User):
     """
     Returns the profile you are authenticating as.
     """
 
-    return json({"payload": profile})
+    return json(profile.to_dict())

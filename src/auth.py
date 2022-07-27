@@ -6,17 +6,25 @@ from functools import wraps
 from typing import TypedDict, Optional
 
 import jwt
-from sanic import text
+
+from sanic import Request, text
 from sanic.log import logger
 import sanic
-class Profile(TypedDict):
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.engine import CursorResult
+
+from models import User
+
+class Token(TypedDict):
     """
     The format that the JWTs are generated in
     """
     user_id: int
     expires: Optional[float]
 
-def check_token(request: sanic.Request) -> Optional[Profile]:
+def check_token(request: sanic.Request) -> Optional[Token]:
     """
     Check a token.
     TODO figure out how it does that
@@ -44,17 +52,21 @@ def protected(wrapped):
     """
     def decorator(func):
         @wraps(func)
-        async def decorated_function(request, *args, **kwargs):
-            profile: Profile = check_token(request)
+        async def decorated_function(request: Request, *args, **kwargs):
+            token = check_token(request)
 
-            if profile:
-                if expiretimestamp := profile["expires"]:
+            if token:
+                if expiretimestamp := token["expires"]:
                     expiretime = datetime.fromtimestamp(expiretimestamp)
 
                     if expiretime <= datetime.now():
                         return text("Authorisation has expired.", 401)
 
-                response = await func(request, *args, **kwargs, profile=profile)
+                    session: AsyncSession = request.ctx.session
+
+                    user: User = session.get(token["user_id"])
+
+                response = await func(request, *args, **kwargs, profile=user)
                 return response
             else:
                 return text("You are unauthorized.", 401)
