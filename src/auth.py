@@ -8,12 +8,9 @@ from typing import TypedDict, Optional
 import jwt
 
 from sanic import Request, text
-from sanic.log import logger
 import sanic
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.engine import CursorResult
 
 from models import User
 
@@ -33,8 +30,6 @@ def check_token(request: sanic.Request) -> Optional[Token]:
     token = request.cookies.get(".CHECKMATESECRET")
     if not token:
         return None
-
-    logger.info(token)
 
     try:
         return jwt.decode(
