@@ -5,12 +5,11 @@ from contextvars import ContextVar
 import os
 from textwrap import dedent
 import re
-from typing import Optional
 
 import git
 from dotenv import load_dotenv
 
-from sqlalchemy import inspect, select, and_
+from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import CursorResult

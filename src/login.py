@@ -13,9 +13,15 @@ import httpx
 
 from sanic import Blueprint, Request, json
 from sanic.log import logger
-from sanic_ext import validate
+from sanic_ext import validate, openapi
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.engine import CursorResult
 
 from auth import protected, Profile
+
+import models
 
 def get_hostname(url, uri_type='netloc_only'):
     """Get the host name from the url"""
@@ -30,7 +36,6 @@ HTTPX_CLIENT = httpx.AsyncClient()
 
 login = Blueprint("login", url_prefix="/login")
 
-@dataclass
 class LoginBody:
     """
     Validates /login for frcCaptchaSolution in a JSON dict.
@@ -88,7 +93,8 @@ async def verify_captcha(given_solution: str, fc_secret: str):
         }
 
 @login.post("/")
-@validate(json=LoginBody)
+@openapi.body(LoginBody)
+@validate(json=dataclass(LoginBody))
 async def do_login(request: Request, body: LoginBody):
     """
     Assigns JSON Web Token
@@ -99,9 +105,11 @@ async def do_login(request: Request, body: LoginBody):
 
     captcha_resp = await verify_captcha(given_solution, request.app.config.FC_SECRET)
 
-    user_facing_message = "Signed you in! Redirecting..."
+    user_facing_message = "Signed you in! Redirecting..." # the toast people will see after they're redirected to homepage (sign-in complete)
 
     if bool(captcha_resp.get("accept", False)) is False:
+
+        accept = True
 
         match captcha_resp["errorCode"]:
             case "secret_missing":
@@ -114,20 +122,55 @@ async def do_login(request: Request, body: LoginBody):
                 user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
             case "solution_invalid":
                 user_facing_message = "Invalid captcha solution."
+                accept = False
             case "solution_timeout_or_duplicate":
                 user_facing_message = "Expired captcha solution. Please refresh the page."
+                accept = False
             case _:
                 user_facing_message = captcha_resp["errorCode"]
 
         return json({
-            "accept": False,
+            "accept": accept,
             "userFacingMessage": user_facing_message
         })
+
+    session: AsyncSession = request.ctx.session
+
+    username = request.args['username'][0]
+    password = request.args['password'][0]
+
+    stmt = select(models.User).where(
+        models.User.username == username
+    )
+
+    resp: CursorResult = await session.execute(stmt)
+
+    row = resp.first()
+
+    if row is None:
+        # account not found
+        return json(
+            {
+                "accept": False,
+                "userFacingMessage": "Invalid username or password."
+            }
+        )
+
+    user: models.User = row["User"]
+
+    if user.password != password:
+        # password incorrect
+        return json(
+            {
+                "accept": False,
+                "userFacingMessage": "Invalid username or password."
+            }
+        )
 
     expires = (datetime.now() + timedelta(weeks=4)).timestamp() if body.rememberMe else None
 
     payload = {
-        'user_id': random.randint(666,1337),
+        'user_id': user.user_id,
         'expires': expires
     }
 
