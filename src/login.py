@@ -6,7 +6,6 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import random
 from urllib.parse import urlparse
 import jwt
 import httpx
