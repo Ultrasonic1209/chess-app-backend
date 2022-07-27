@@ -53,7 +53,7 @@ class User(BaseModel):
         return {
             "name": self.username,
             "email": self.email,
-            "timeCreated": self.time_created,
+            "timeCreated": self.time_created.isoformat(),
         }
 
 
@@ -99,7 +99,7 @@ class Game(BaseModel):
     def to_dict(self):
         return {
             "game_id": self.game_id,
-            "time_started": self.time_started,
-            "time_ended": self.time_ended,
+            "time_started": self.time_started.isoformat(),
+            "time_ended": self.time_ended.isoformat(),
             "white_won": self.white_won,
         }
