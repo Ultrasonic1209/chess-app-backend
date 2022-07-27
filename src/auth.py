@@ -64,7 +64,7 @@ def protected(wrapped):
 
                     session: AsyncSession = request.ctx.session
 
-                    user: User = session.get(token["user_id"])
+                    user: User = await session.get(User, token["user_id"])
 
                 response = await func(request, *args, **kwargs, profile=user)
                 return response
