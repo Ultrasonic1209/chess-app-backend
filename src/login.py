@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import CursorResult
 
-from auth import protected
+from auth import protected, silentprotected
 
 import models
 
@@ -196,7 +196,7 @@ async def do_login(request: Request, body: LoginBody):
     return response
 
 @login.get("/identify")
-@protected
+@silentprotected
 async def identify(request: Request, profile: models.User):
     """
     Returns the profile you are authenticating as.

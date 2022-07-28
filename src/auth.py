@@ -7,7 +7,7 @@ from typing import TypedDict, Optional
 
 import jwt
 
-from sanic import Request, text
+from sanic import Request, text, json
 import sanic
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,7 +39,37 @@ def check_token(request: sanic.Request) -> Optional[Token]:
         )
     except jwt.exceptions.InvalidTokenError:
         return None
+    
 
+    
+def silentprotected(wrapped):
+    """
+    Ensures all requests to anything wrapped with this decorator are authenticated whilst not returning a 401.
+    """
+    def decorator(func):
+        @wraps(func)
+        async def decorated_function(request: Request, *args, **kwargs):
+            token = check_token(request)
+
+            if token:
+                if expiretimestamp := token["expires"]:
+                    expiretime = datetime.fromtimestamp(expiretimestamp)
+
+                    if expiretime <= datetime.now():
+                        return json({})
+
+                session: AsyncSession = request.ctx.session
+
+                user: User = await session.get(User, token["user_id"])
+
+                response = await func(request, *args, **kwargs, profile=user)
+                return response
+            else:
+                return json({})
+
+        return decorated_function
+
+    return decorator(wrapped)
 
 def protected(wrapped):
     """
