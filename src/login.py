@@ -177,7 +177,8 @@ async def do_login(request: Request, body: LoginBody):
     response = json(
         {
             "accept": True,
-            "userFacingMessage": user_facing_message
+            "userFacingMessage": user_facing_message,
+            "profile": user.to_dict()
         }
     )
 
