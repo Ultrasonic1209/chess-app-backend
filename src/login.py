@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import jwt
 import httpx
 
-from sanic import Blueprint, Request, json
+from sanic import Blueprint, Request, json, text
 from sanic.log import logger
 from sanic_ext import validate, openapi
 
@@ -193,6 +193,16 @@ async def do_login(request: Request, body: LoginBody):
     if body.rememberMe:
         response.cookies[".CHECKMATESECRET"]["expires"] = datetime.fromtimestamp(expires)
 
+    return response
+
+@login.delete("/logout")
+async def do_logout(request: Request):
+    """
+    Removes JSON Web Token
+    """
+    response = text("OK")
+    del response.cookies[".CHECKMATESECRET"]
+    
     return response
 
 @login.get("/identify")
