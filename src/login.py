@@ -202,7 +202,7 @@ async def do_logout(request: Request):
     """
     response = text("OK")
     del response.cookies[".CHECKMATESECRET"]
-    
+
     return response
 
 @login.get("/identify")

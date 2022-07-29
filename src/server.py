@@ -218,5 +218,5 @@ if __name__ == '__main__':
         fast=True,
         auto_reload=(not ISDEV), # crashed my codespace
         debug=ISDEV,
-        access_log=True,
+        access_log=ISDEV,
     )
