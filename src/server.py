@@ -210,6 +210,8 @@ async def index(request: Request):
 
     return text(resp)
 
+app.static('/static', './static')
+app.static("/favicon.ico", "./static/favicon.ico", name="favicon")
 
 if __name__ == '__main__':
     app.run( # app.make_coffee is also a thing somehow lol
