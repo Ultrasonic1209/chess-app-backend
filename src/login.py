@@ -16,9 +16,9 @@ from sanic_ext import validate, openapi
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.engine import CursorResult
+from sqlalchemy.engine import Result
 
-from auth import protected, silentprotected
+from auth import silentprotected
 
 import models
 
@@ -142,7 +142,8 @@ async def do_login(request: Request, body: LoginBody):
         models.User.username == username
     )
 
-    resp: CursorResult = await session.execute(stmt)
+    async with session.begin():
+        resp: Result = await session.execute(stmt)
 
     row = resp.first()
 

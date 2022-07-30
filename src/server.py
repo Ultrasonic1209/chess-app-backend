@@ -103,11 +103,13 @@ async def sql(request: Request):
     TODO https://docs.sqlalchemy.org/en/14/tutorial/metadata.html
     """
     session: AsyncSession = request.ctx.session
-    conn: AsyncConnection = await session.connection()
 
-    tables = await conn.run_sync(
-        lambda sync_conn: inspect(sync_conn).get_table_names()
-    )
+    async with session.begin():
+        conn: AsyncConnection = await session.connection()
+
+        tables = await conn.run_sync(
+            lambda sync_conn: inspect(sync_conn).get_table_names()
+        )
     return json(tables)
 
 @app.patch("/sql/initalise")
@@ -129,20 +131,21 @@ async def sql_initalise(request: Request):
         return text("hint: first name, capital S", status=401)
 
     session: AsyncSession = request.ctx.session
-    conn: AsyncConnection = await session.connection()
+    async with session.begin():
+        conn: AsyncConnection = await session.connection()
 
-    await conn.run_sync(models.Base.metadata.drop_all)
-    await conn.run_sync(models.Base.metadata.create_all)
+        await conn.run_sync(models.Base.metadata.drop_all)
+        await conn.run_sync(models.Base.metadata.create_all)
 
-    user = models.User()
+        user = models.User()
 
-    user.username = "bar"
-    user.password = "ha"
-    user.email = "email@example.com"
+        user.username = "bar"
+        user.password = "ha"
+        user.email = "email@example.com"
 
-    session.add(user)
+        session.add(user)
 
-    await session.commit()
+        await session.commit()
 
     assert user.password == "ha"
 
@@ -176,7 +179,8 @@ async def sql_auth(request: Request):
         models.User.username == username
     )
 
-    resp: CursorResult = await session.execute(stmt)
+    async with session.begin():
+        resp: CursorResult = await session.execute(stmt)
 
     row = resp.first()
 

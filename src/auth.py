@@ -60,7 +60,8 @@ def silentprotected(wrapped):
 
                 session: AsyncSession = request.ctx.session
 
-                user: User = await session.get(User, token["user_id"])
+                async with session.begin():
+                    user: User = await session.get(User, token["user_id"])
 
                 response = await func(request, *args, **kwargs, profile=user)
                 return response
@@ -87,8 +88,9 @@ def protected(wrapped):
                     if expiretime <= datetime.now():
                         return text("Authorisation has expired.", 401)
 
-                    session: AsyncSession = request.ctx.session
+                session: AsyncSession = request.ctx.session
 
+                async with session.begin():
                     user: User = await session.get(User, token["user_id"])
 
                 response = await func(request, *args, **kwargs, profile=user)
