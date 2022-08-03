@@ -2,8 +2,6 @@
 Holds shared classes that don't fit into `models.py`
 """
 
-import os
-
 from sanic import Sanic
 from sanic import Request as SanicRequest
 from sanic_ext import Config
