@@ -1,7 +1,7 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from sqlalchemy import BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
+from sqlalchemy import ARRAY, BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
 from sqlalchemy.orm import declarative_base, relationship
 
 from sqlalchemy import MetaData
@@ -77,6 +77,7 @@ class Player(BaseModel):
             "user_id": self.user_id,
             "game_id": self.game_id,
             "is_white": self.is_white,
+            "movetimes": self.movetimes
         }
 
 
@@ -89,7 +90,7 @@ class Game(BaseModel):
 
     game_id = Column(INTEGER(), primary_key=True)
 
-    moves = Column(String(90), nullable=True)
+    moves = Column(String(1024), nullable=True)
     time_started = Column(TIMESTAMP(), nullable=False)
     time_ended = Column(TIMESTAMP(), nullable=True)
     white_won = Column(BOOLEAN(), nullable=True)

@@ -1,7 +1,10 @@
 """
 Will handle everything related to chess games.
 """
+import datetime
+
 import chess
+import chess.pgn
 from sanic import Blueprint, Request, text, json
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
@@ -34,15 +37,43 @@ async def chess_move(request: Request):
     openapi:
     ---
     parameters:
-      - name: move
-        in: query
-        description: the move you want to make (UCI format)
+      - in: query
+        name: moves[]
+        description: the moves you want to make (UCI format)
         required: true
+        schema:
+            type: array
+            items:
+                type: string
     """
 
-    move = request.args.get("move")
+    time = datetime.datetime.now()
 
-    board = chess.Board()
-    board.push_uci(move)
+    game = chess.pgn.Game({
+        "Event": "Checkmate Chess Game",
+        "Site": request.headers["origin"].replace("https://", ""),
+        "Date": time.strftime(r"%Y.%m.%d"),
+        "Round": 1,
+        "White": "Surname, Forename",
+        "Black": "Surname, Forename",
+        "Result": "*",
+
+        "Annotator": "Checkmate",
+        #PlyCount
+        #TimeControl
+        "Time": time.strftime(r"%H:%M:%S"),
+        "Termination": "unterminated",
+        "Mode": "ICS",
+        #FEN
+    })
+
+    movecount = 1
+    for ucimove in request.args['moves[]']:
+        game.end().add_line([chess.Move.from_uci(ucimove)], comment=f"comment here! move {movecount}").set_clock(3 * movecount)
+        movecount += 1
+
+    board = game.end().board()
+
+    print(game)
 
     return text(str(board))
