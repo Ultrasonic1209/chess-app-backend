@@ -1,7 +1,7 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from sqlalchemy import ARRAY, BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
+from sqlalchemy import BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
 from sqlalchemy.orm import declarative_base, relationship
 
 from sqlalchemy import MetaData

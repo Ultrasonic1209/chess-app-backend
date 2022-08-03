@@ -14,9 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_e
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import CursorResult
 
-from sanic import Sanic, Request, json, text
-from sanic_ext import Config
+from sanic import json, text
 
+from classes import App, AppConfig, Request
 from chess_bp import chess_blueprint as chessBp
 from login import login
 from misc import misc
@@ -30,9 +30,9 @@ ISDEV = bool(os.getenv("DEV"))
 repo = git.Repo(search_parent_directories=True)
 sha = repo.head.object.hexsha
 
-app = Sanic("CheckmateBackend")
+app = App("CheckmateBackend")
 
-app.extend(config=Config(
+app.extend(config=AppConfig(
     oas=True,
     oas_autodoc=True,
     oas_ui_default="swagger",
@@ -42,9 +42,6 @@ app.extend(config=Config(
     cors_allow_headers=["content-type"],
     cors_always_send=True,
     cors_max_age=48,
-
-    FC_SECRET=os.getenv("FRIENDLY_CAPTCHA_SECRET", ""),
-    SECRET=os.getenv("JWT_SECRET", "")
 ))
 
 app.ext.openapi.describe(
@@ -70,6 +67,9 @@ bind = create_async_engine(
     echo=True,
     pool_pre_ping=True,
 )
+
+app.config.SECRET = os.getenv("JWT_SECRET", "")
+app.config.FC_SECRET = os.getenv("FRIENDLY_CAPTCHA_SECRET", "")
 
 if not ISDEV:
     app.config.FORWARDED_SECRET = os.getenv("FORWARDED_SECRET", "")

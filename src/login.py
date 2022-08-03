@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import jwt
 import httpx
 
-from sanic import Blueprint, Request, json, text
+from sanic import Blueprint, json, text
 from sanic.log import logger
 from sanic_ext import validate, openapi
 
@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 
 from auth import silentprotected
+from classes import Request
 
 import models
 

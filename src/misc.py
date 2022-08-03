@@ -2,8 +2,10 @@
 Misc things that don't fit in anywhere else
 """
 import asyncio
-from sanic import Blueprint, text, json, Request
+from sanic import Blueprint, text, json
 from sanic.log import logger
+
+from classes import Request
 
 misc = Blueprint("misc", url_prefix="/misc")
 

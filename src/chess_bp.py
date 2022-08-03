@@ -5,7 +5,9 @@ import datetime
 
 import chess
 import chess.pgn
-from sanic import Blueprint, Request, text, json
+from sanic import Blueprint, text, json
+
+from classes import Request
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 

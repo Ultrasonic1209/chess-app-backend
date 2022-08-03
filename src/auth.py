@@ -7,12 +7,13 @@ from typing import TypedDict, Optional
 
 import jwt
 
-from sanic import Request, text, json
+from sanic import text, json
 import sanic
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User
+from classes import Request
 
 class Token(TypedDict):
     """
