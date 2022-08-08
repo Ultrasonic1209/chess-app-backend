@@ -2,6 +2,7 @@
 Holds shared classes that don't fit into `models.py`
 """
 
+from typing import TypedDict
 from sanic import Sanic
 from sanic import Request as SanicRequest
 from sanic_ext import Config
@@ -24,3 +25,11 @@ class Request(SanicRequest):
     This is to allow typechecking of the custom App.
     """
     app: App
+
+class User(TypedDict):
+    """
+    Represents the OpenAPI representation of a Checkmate user.
+    """
+    name: str
+    email: str
+    timeCreated: str

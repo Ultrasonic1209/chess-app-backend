@@ -6,6 +6,7 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Optional
 from urllib.parse import urlparse
 import jwt
 import httpx
@@ -21,7 +22,7 @@ from sqlalchemy.engine import Result
 from auth import silentprotected
 from classes import Request
 
-import models
+import models, classes
 
 def get_hostname(url, uri_type='netloc_only'):
     """Get the host name from the url"""
@@ -92,8 +93,17 @@ async def verify_captcha(given_solution: str, fc_secret: str):
             "errorCode": "unknown_error"
         }
 
+class LoginResponse:
+    """
+    Classes the response from /login
+    """
+    accept: bool
+    userFacingMessage: str
+    profile: Optional[classes.User]
+
 @login.post("/")
 @openapi.body(LoginBody)
+@openapi.response(status=200, content={"application/json": LoginResponse}, description="When a valid login attempt is made")
 @validate(json=dataclass(LoginBody))
 async def do_login(request: Request, body: LoginBody):
     """
@@ -129,10 +139,11 @@ async def do_login(request: Request, body: LoginBody):
             case _:
                 user_facing_message = captcha_resp["errorCode"]
 
-        return json({
-            "accept": accept,
-            "userFacingMessage": user_facing_message
-        })
+        if not accept:
+            return json({
+                "accept": False,
+                "userFacingMessage": user_facing_message
+            })
 
     session: AsyncSession = request.ctx.session
 

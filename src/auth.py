@@ -40,9 +40,9 @@ def check_token(request: sanic.Request) -> Optional[Token]:
         )
     except jwt.exceptions.InvalidTokenError:
         return None
-    
 
-    
+
+
 def silentprotected(wrapped):
     """
     Ensures all requests to anything wrapped with this decorator are authenticated whilst not returning a 401.

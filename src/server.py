@@ -9,10 +9,9 @@ import re
 import git
 from dotenv import load_dotenv
 
-from sqlalchemy import inspect, select
+from sqlalchemy import inspect
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.engine import CursorResult
 
 from sanic import json, text
 
@@ -150,54 +149,6 @@ async def sql_initalise(request: Request):
     assert user.password == "ha"
 
     return text("done!")
-
-@app.post("/sql/auth")
-async def sql_auth(request: Request):
-    """
-    test account: username `bar` password `ha`
-
-    openapi:
-    ---
-    parameters:
-      - name: username
-        in: query
-        description: username!
-        required: true
-
-      - name: password
-        in: query
-        description: password.
-        required: true
-    """
-
-    session: AsyncSession = request.ctx.session
-
-    username = request.args['username'][0]
-    password = request.args['password'][0]
-
-    stmt = select(models.User).where(
-        models.User.username == username
-    )
-
-    async with session.begin():
-        resp: CursorResult = await session.execute(stmt)
-
-    row = resp.first()
-
-    if row is None:
-        # account not found
-        return text("Invalid username or password.")
-
-    user: models.User = row["User"]
-
-    if user.password != password:
-        # password incorrect
-        return text("Invalid username or password.")
-
-    return text(f"Logged in! User ID: {user.user_id}")
-
-
-
 
 @app.get("/")
 async def index(request: Request):

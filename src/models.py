@@ -76,8 +76,7 @@ class Player(BaseModel):
         return {
             "user_id": self.user_id,
             "game_id": self.game_id,
-            "is_white": self.is_white,
-            "movetimes": self.movetimes
+            "is_white": self.is_white
         }
 
 
