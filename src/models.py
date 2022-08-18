@@ -57,6 +57,8 @@ class User(BaseModel):
         }
 
 
+# what i was thinking i could do is make user_id nullable and maybe put a nullable session_id in place as well
+# todo: think about indexing
 class Player(BaseModel):
     """
     Each chess game has two players.
@@ -103,3 +105,11 @@ class Game(BaseModel):
             "time_ended": self.time_ended.isoformat(),
             "white_won": self.white_won,
         }
+
+class Session(Base):
+    """
+    For unregistered players to be able to play online games.
+    """
+
+    session_id = Column(INTEGER(), primary_key=True)
+    session = Column(String(1024), primary_key=False)
