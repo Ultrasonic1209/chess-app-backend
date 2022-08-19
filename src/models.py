@@ -111,5 +111,7 @@ class Session(Base):
     For unregistered players to be able to play online games.
     """
 
+    __tablename__ = "Session"
+
     session_id = Column(INTEGER(), primary_key=True)
     session = Column(String(1024), primary_key=False)
