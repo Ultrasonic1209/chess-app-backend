@@ -7,6 +7,8 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
+import secrets
+
 import jwt
 import httpx
 
@@ -159,10 +161,22 @@ async def do_login(request: Request, body: LoginBody):
             }
         )
 
+    # user is authenticated
+
+    usertoken = secrets.token_hex(32)
+
+    usersession = models.Session()
+    usersession.session = usertoken
+    usersession.user_id = user.user_id
+
+    async with session.begin():
+        session.add(usersession)
+
     expires = (datetime.now() + timedelta(weeks=4)).timestamp() if body.rememberMe else None
 
     payload = {
         'user_id': user.user_id,
+        'session': usertoken,
         'expires': expires
     }
 

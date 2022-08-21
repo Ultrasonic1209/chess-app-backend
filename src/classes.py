@@ -39,7 +39,9 @@ class Token(TypedDict):
     The format that the JWTs are generated in
     """
     user_id: int
+    session: str
     expires: Optional[float]
+
 class LoginResponse:
     """
     Classes the response from /login
