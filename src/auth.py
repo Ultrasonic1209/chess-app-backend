@@ -34,7 +34,7 @@ def check_token(request: sanic.Request) -> Optional[Token]:
     except jwt.exceptions.InvalidTokenError:
         return None
 
-def protected(wrapped: Optional[Callable] = None, silent: bool = False):
+def protected(wrapped = None, silent: bool = False):
     """
     Ensures all requests to anything wrapped with this decorator are authenticated.
     """
