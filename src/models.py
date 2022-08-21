@@ -115,7 +115,7 @@ class Session(Base):
     __tablename__ = "Session"
 
     session_id = Column(INTEGER(), primary_key=True)
-    session = Column(String(1024), primary_key=False, unique=True, index=True)
+    session = Column(String(32), primary_key=False, unique=True, index=True)
 
     user_id = Column(ForeignKey("User.user_id"), nullable=True)
     user = relationship("User", back_populates="sessions", uselist=False)
