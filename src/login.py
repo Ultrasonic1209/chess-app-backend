@@ -6,7 +6,6 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional
 from urllib.parse import urlparse
 import jwt
 import httpx
@@ -19,10 +18,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 
-from auth import silentprotected
-from classes import Request
+from auth import protected
+from classes import Request, LoginBody, LoginResponse, Token
 
-import models, classes
+import models
 
 def get_hostname(url, uri_type='netloc_only'):
     """Get the host name from the url"""
@@ -36,17 +35,6 @@ def get_hostname(url, uri_type='netloc_only'):
 HTTPX_CLIENT = httpx.AsyncClient()
 
 login = Blueprint("login", url_prefix="/login")
-
-class LoginBody:
-    """
-    Validates /login for frcCaptchaSolution in a JSON dict.
-    """
-    username: str
-    password: str
-    # pylint: disable=invalid-name
-    rememberMe: bool
-    frcCaptchaSolution: str
-
 
 async def verify_captcha(given_solution: str, fc_secret: str):
     """
@@ -92,14 +80,6 @@ async def verify_captcha(given_solution: str, fc_secret: str):
             "accept": True,
             "errorCode": "unknown_error"
         }
-
-class LoginResponse:
-    """
-    Classes the response from /login
-    """
-    accept: bool
-    userFacingMessage: str
-    profile: Optional[classes.User]
 
 @login.post("/")
 @openapi.body(LoginBody)
@@ -219,10 +199,10 @@ async def do_logout(request: Request):
     return response
 
 @login.get("/identify")
-@silentprotected
-async def identify(request: Request, profile: models.User):
+@protected(silent=True)
+async def identify(request: Request, profile: models.User, token: Token):
     """
     Returns the profile you are authenticating as.
     """
 
-    return json(profile.to_dict())
+    return json({"profile": profile.to_dict(), "token": token})
