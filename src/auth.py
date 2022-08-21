@@ -9,6 +9,7 @@ import jwt
 
 from sanic import text, json
 import sanic
+from sanic.log import logger
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,6 +55,8 @@ def is_logged_in(silent: bool = False):
                             return text("Authorisation has expired.", 401)
 
                 session: AsyncSession = request.ctx.session
+
+                logger.info(token)
 
                 async with session.begin():
                     user: User = await session.get(User, token["user_id"])
