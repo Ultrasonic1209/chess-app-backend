@@ -38,6 +38,7 @@ def check_token(request: sanic.Request) -> Optional[Token]:
 def is_logged_in(silent: bool = False):
     """
     Ensures all requests to anything wrapped with this decorator are authenticated.
+    TODO: move expiration to the server
     """
     def decorator(func):
         @wraps(func)
