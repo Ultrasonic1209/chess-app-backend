@@ -20,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 
-from auth import protected
+from auth import is_logged_in
 from classes import Request, LoginBody, LoginResponse, Token
 
 import models
@@ -213,7 +213,7 @@ async def do_logout(request: Request):
     return response
 
 @login.get("/identify")
-@protected
+@is_logged_in(silent=True)
 async def identify(request: Request, profile: models.User, token: Token):
     """
     Returns the profile you are authenticating as.
