@@ -3,7 +3,7 @@ From https://sanic.dev/en/guide/how-to/authentication.html#auth.py
 """
 from datetime import datetime
 from functools import wraps
-from typing import Callable, Optional
+from typing import Optional
 
 import jwt
 
@@ -34,7 +34,7 @@ def check_token(request: sanic.Request) -> Optional[Token]:
     except jwt.exceptions.InvalidTokenError:
         return None
 
-def protected(wrapped = None, silent: bool = False):
+def protected(wrapped, silent: bool = False):
     """
     Ensures all requests to anything wrapped with this decorator are authenticated.
     """

@@ -199,7 +199,7 @@ async def do_logout(request: Request):
     return response
 
 @login.get("/identify")
-@protected(silent=True)
+@protected
 async def identify(request: Request, profile: models.User, token: Token):
     """
     Returns the profile you are authenticating as.
