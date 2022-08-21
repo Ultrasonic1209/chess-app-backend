@@ -47,7 +47,8 @@ class User(BaseModel):
     email = Column(EmailType(length=100), nullable=True)
     time_created = Column(TIMESTAMP(), nullable=False)
 
-    user_players = relationship("Player", back_populates="user")
+    players = relationship("Player", back_populates="user")
+    sessions = relationship("Session", back_populates="user")
 
     def to_dict(self):
         return {
@@ -57,8 +58,6 @@ class User(BaseModel):
         }
 
 
-# what i was thinking i could do is make user_id nullable and maybe put a nullable session_id in place as well
-# todo: think about indexing
 class Player(BaseModel):
     """
     Each chess game has two players.
@@ -66,13 +65,15 @@ class Player(BaseModel):
 
     __tablename__ = "Player"
 
-    user_id = Column(ForeignKey("User.user_id"), primary_key=True)
-    game_id = Column(ForeignKey("Game.game_id"), primary_key=True)
+    game_id = Column(ForeignKey("Game.game_id"), nullable=False, primary_key=True)
+    is_white = Column(BOOLEAN(), nullable=False, primary_key=True)
 
-    is_white = Column(BOOLEAN(), nullable=False)
+    user_id = Column(ForeignKey("User.user_id"), nullable=True)
+    session_id = Column(ForeignKey("Session.user_id"), nullable=True)
 
-    user = relationship("User", back_populates="user_players")
-    game = relationship("Game", back_populates="players")
+    user = relationship("User", back_populates="players", uselist=False)
+    game = relationship("Game", back_populates="players", uselist=False)
+    session = relationship("Session", uselist=False)
 
     def to_dict(self):
         return {
@@ -114,4 +115,7 @@ class Session(Base):
     __tablename__ = "Session"
 
     session_id = Column(INTEGER(), primary_key=True)
-    session = Column(String(1024), primary_key=False)
+    session = Column(String(1024), primary_key=False, unique=True, index=True)
+
+    user_id = Column(ForeignKey("User.user_id"), nullable=True)
+    user = relationship("User", back_populates="sessions", uselist=False)
