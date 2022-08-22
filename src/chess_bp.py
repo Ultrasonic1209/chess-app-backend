@@ -41,7 +41,11 @@ async def create_game(request: Request):
     if user:
         player.user = user
     else:
+        logger.info("lol!")
+        logger.info(session)
         player.session = session
+        logger.info(player)
+        logger.info(player.session)
 
     game = models.Game()
     game.players.append(player)
