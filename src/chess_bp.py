@@ -54,7 +54,7 @@ async def create_game(request: Request):
     if session.user is None: # userless session
         payload = {
             'user_id': None,
-            'session': session.session_id,
+            'session': session.session,
             'expires': None
         }
 
