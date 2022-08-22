@@ -52,6 +52,9 @@ async def create_game(request: Request):
 
     async with query_session.begin():
         query_session.add_all(toadd)
+        await query_session.commit()
+
+    logger.info(session.session_id)
 
     response = json(dict(game_id=game.game_id))
 
