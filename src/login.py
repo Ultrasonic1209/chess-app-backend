@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 
 from auth import is_logged_in
-from classes import Request, LoginBody, LoginResponse, Token
+from classes import Request, LoginBody, LoginResponse
 
 import models
 

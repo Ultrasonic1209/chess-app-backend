@@ -7,9 +7,11 @@ import chess
 import chess.pgn
 from sanic import Blueprint, text, json
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from classes import Request
-from models import Session, User
 from auth import authenticate_request
+import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
@@ -18,9 +20,27 @@ async def create_game(request: Request):
     """
     Creates a chess game in the database, being logged in is optional
     """
+    query_session: AsyncSession = request.ctx.session
     user, session = await authenticate_request(request=request)
 
-    return json(dict(user=user.to_dict() if user else None, session=session.session_id if session else None))
+    if (user is None) and (session is None):
+        session = models.Session()
+
+    player = models.Player()
+    player.is_white = True
+
+    if user:
+        player.user = user
+    else:
+        player.session = session
+
+    game = models.Game()
+    game.players.append(player)
+
+    async with query_session.begin():
+        query_session.add_all(session, player, game)
+
+    return json(game_id=game.game_id)
 
 @chess_blueprint.get("/starter")
 async def chess_board(request: Request):
