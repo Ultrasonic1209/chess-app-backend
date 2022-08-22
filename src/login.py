@@ -12,8 +12,7 @@ import secrets
 import jwt
 import httpx
 
-from sanic import Blueprint, json, text
-from sanic.log import logger
+from sanic import Blueprint, json
 from sanic_ext import validate, openapi
 
 from sqlalchemy import select
@@ -202,18 +201,24 @@ async def do_login(request: Request, body: LoginBody):
     return response
 
 @login.delete("/logout")
-async def do_logout(request: Request):
+@is_logged_in(silent=True)
+async def do_logout(request: Request, profile: models.User, session: models.Session):
     """
-    Removes JSON Web Token
+    Removes JSON Web Token and destroys the session.
     """
-    response = text("OK")
+    query_session: AsyncSession = request.ctx.session
+
+    async with query_session.begin():
+        query_session.expunge(session)
+
+    response = json({"success": True})
     del response.cookies[".CHECKMATESECRET"]
 
     return response
 
 @login.get("/identify")
 @is_logged_in(silent=True)
-async def identify(request: Request, profile: models.User, token: Token):
+async def identify(request: Request, profile: models.User, session: models.Session):
     """
     Returns the profile you are authenticating as.
     """
