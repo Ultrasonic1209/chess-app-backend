@@ -72,7 +72,8 @@ class User(BaseModel):
 
     sessions = relationship(
         "Session",
-        back_populates="user"
+        back_populates="user",
+        lazy="selectin"
     )
 
     def to_dict(self):
@@ -211,5 +212,6 @@ class Session(Base):
     user: User = relationship(
         "User",
         back_populates="sessions",
-        uselist=False
+        uselist=False,
+        lazy="selectin"
     )

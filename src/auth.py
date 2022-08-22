@@ -72,7 +72,7 @@ def is_logged_in(silent: bool = False):
                         if silent:
                             return json({})
                         else:
-                            return text("Authorisation has expired.", 401)
+                            return text("Authorised user does not exist.", 401)
 
                     user_session: Session = user_session_row["Session"]
 
