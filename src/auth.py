@@ -12,6 +12,7 @@ import sanic
 from sanic.log import logger
 
 from sqlalchemy import select
+from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User, Session
@@ -58,17 +59,23 @@ def is_logged_in(silent: bool = False):
 
                 session: AsyncSession = request.ctx.session
 
-                logger.info(token)
-
                 stmt = select(Session).where(
                     Session.session == token["session"]
                 ).with_hint(Session, "USE INDEX (ix_Session_session)")
 
-                logger.info(stmt)
-
                 async with session.begin():
-                    #user_session: Session = await session
-                    user: User = await session.get(User, token["user_id"])
+                    user_session_result: Result = await session.execute(stmt)
+
+                user_session_row = user_session_result.first()
+
+                if not user_session_row:
+                    if silent:
+                        return json({})
+                    else:
+                        return text("Authorisation has expired.", 401)
+
+                user_session: Session = user_session_row["Session"]
+                user: User = user_session.user
 
                 response = await func(request, *args, **kwargs, profile=user, token=token)
                 return response

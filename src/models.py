@@ -1,6 +1,7 @@
 """
 Represents the database as a bunch of Python objects.
 """
+from typing import List, Optional
 from sqlalchemy import BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -168,7 +169,7 @@ class Game(BaseModel):
         nullable=True
     )
 
-    players = relationship(
+    players: List[Player] = relationship(
         "Player",
         back_populates="game"
     )
@@ -207,7 +208,7 @@ class Session(Base):
         nullable=True
     )
 
-    user = relationship(
+    user: User = relationship(
         "User",
         back_populates="sessions",
         uselist=False
