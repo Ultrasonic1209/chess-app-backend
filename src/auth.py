@@ -75,7 +75,9 @@ def is_logged_in(silent: bool = False):
                         return text("Authorisation has expired.", 401)
 
                 user_session: Session = user_session_row["Session"]
-                user: User = user_session.user
+
+                async with session.begin():
+                    user: User = user_session.user
 
                 response = await func(request, *args, **kwargs, profile=user, token=token)
                 return response
