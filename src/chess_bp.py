@@ -5,8 +5,11 @@ import datetime
 
 import chess
 import chess.pgn
-import jwt, secrets
+import jwt
+import secrets
+
 from sanic import Blueprint, text, json
+from sanic.log import logger
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,6 +42,8 @@ async def create_game(request: Request):
         player.user_id = user.user_id
     else:
         player.session_id = session.session_id
+
+    logger.info(session.session_id)
 
     game = models.Game()
     game.players.append(player)
