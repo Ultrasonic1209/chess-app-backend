@@ -1,7 +1,7 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from typing import List, Optional
+from typing import List
 from sqlalchemy import BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -17,6 +17,7 @@ __all__ = ["Base", "User", "Player", "Game", "Session"]
 
 Base = declarative_base()
 
+_LAZYMETHOD = "selectin"
 
 class BaseModel(Base):
     """
@@ -67,13 +68,14 @@ class User(BaseModel):
 
     players = relationship(
         "Player",
-        back_populates="user"
+        back_populates="user",
+        lazy=_LAZYMETHOD
     )
 
     sessions = relationship(
         "Session",
         back_populates="user",
-        lazy="selectin"
+        lazy=_LAZYMETHOD
     )
 
     def to_dict(self):
@@ -116,18 +118,21 @@ class Player(BaseModel):
     user = relationship(
         "User",
         back_populates="players",
-        uselist=False
+        uselist=False,
+        lazy=_LAZYMETHOD
     )
 
     game = relationship(
         "Game",
         back_populates="players",
-        uselist=False
+        uselist=False,
+        lazy=_LAZYMETHOD
     )
 
     session = relationship(
         "Session",
-        uselist=False
+        uselist=False,
+        lazy=_LAZYMETHOD
     )
 
     def to_dict(self):
@@ -172,7 +177,8 @@ class Game(BaseModel):
 
     players: List[Player] = relationship(
         "Player",
-        back_populates="game"
+        back_populates="game",
+        lazy=_LAZYMETHOD
     )
 
     def to_dict(self):
@@ -213,5 +219,5 @@ class Session(Base):
         "User",
         back_populates="sessions",
         uselist=False,
-        lazy="selectin"
+        lazy=_LAZYMETHOD
     )

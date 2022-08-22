@@ -218,4 +218,4 @@ async def identify(request: Request, profile: models.User, token: Token):
     Returns the profile you are authenticating as.
     """
 
-    return json({"profile": profile.to_dict(), "token": token})
+    return json({profile.to_dict()})
