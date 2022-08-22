@@ -40,7 +40,7 @@ async def create_game(request: Request):
     async with query_session.begin():
         query_session.add_all(session, player, game)
 
-    return json(game_id=game.game_id)
+    return json(dict(game_id=game.game_id))
 
 @chess_blueprint.get("/starter")
 async def chess_board(request: Request):
