@@ -139,36 +139,35 @@ async def do_login(request: Request, body: LoginBody):
     async with session.begin():
         resp: Result = await session.execute(stmt)
 
-    row = resp.first()
+        row = resp.first()
 
-    if row is None:
-        # account not found
-        return json(
-            {
-                "accept": False,
-                "userFacingMessage": "Invalid username or password."
-            }
-        )
+        if row is None:
+            # account not found
+            return json(
+                {
+                    "accept": False,
+                    "userFacingMessage": "Invalid username or password."
+                }
+            )
 
-    user: models.User = row["User"]
+        user: models.User = row["User"]
 
-    if user.password != password:
-        # password incorrect
-        return json(
-            {
-                "accept": False,
-                "userFacingMessage": "Invalid username or password."
-            }
-        )
+        if user.password != password:
+            # password incorrect
+            return json(
+                {
+                    "accept": False,
+                    "userFacingMessage": "Invalid username or password."
+                }
+            )
 
-    # user is authenticated
+        # user is authenticated
 
-    usertoken = secrets.token_hex(32)
+        usertoken = secrets.token_hex(32)
 
-    usersession = models.Session()
-    usersession.session = usertoken
-
-    async with session.begin():
+        usersession = models.Session()
+        usersession.session = usertoken
+    
         user.sessions.append(usersession)
 
     expires = (datetime.now() + timedelta(weeks=4)).timestamp() if body.rememberMe else None
@@ -208,8 +207,6 @@ async def do_logout(request: Request, profile: models.User, session: models.Sess
     Removes JSON Web Token and destroys the session.
     """
     query_session: AsyncSession = request.ctx.session
-
-    logger.info(session)
 
     async with query_session.begin():
         await query_session.delete(session)
