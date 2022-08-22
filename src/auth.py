@@ -78,7 +78,7 @@ def is_logged_in(silent: bool = False):
 
                     user: User = user_session.user
 
-                response = await func(request, *args, **kwargs, profile=user, session=session)
+                response = await func(request, *args, **kwargs, profile=user, session=user_session)
                 return response
             else:
                 if silent:
