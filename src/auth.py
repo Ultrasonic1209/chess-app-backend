@@ -66,17 +66,16 @@ def is_logged_in(silent: bool = False):
                 async with session.begin():
                     user_session_result: Result = await session.execute(stmt)
 
-                user_session_row = user_session_result.first()
+                    user_session_row = user_session_result.first()
 
-                if not user_session_row:
-                    if silent:
-                        return json({})
-                    else:
-                        return text("Authorisation has expired.", 401)
+                    if not user_session_row:
+                        if silent:
+                            return json({})
+                        else:
+                            return text("Authorisation has expired.", 401)
 
-                user_session: Session = user_session_row["Session"]
+                    user_session: Session = user_session_row["Session"]
 
-                async with session.begin():
                     user: User = user_session.user
 
                 response = await func(request, *args, **kwargs, profile=user, token=token)
