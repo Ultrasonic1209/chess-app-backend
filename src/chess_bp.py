@@ -8,8 +8,19 @@ import chess.pgn
 from sanic import Blueprint, text, json
 
 from classes import Request
+from models import Session, User
+from auth import authenticate_request
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
+
+@chess_blueprint.post("/create-game")
+async def create_game(request: Request):
+    """
+    Creates a chess game in the database, being logged in is optional
+    """
+    user, session = await authenticate_request(request=request)
+
+    return json(dict(user=user.to_dict() if user else None, session=session.session_id if session else None))
 
 @chess_blueprint.get("/starter")
 async def chess_board(request: Request):
