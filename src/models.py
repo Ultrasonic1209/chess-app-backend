@@ -111,7 +111,7 @@ class Player(BaseModel):
     )
 
     session_id = Column(
-        ForeignKey("Session.user_id"),
+        ForeignKey("Session.session_id"),
         nullable=True
     )
 

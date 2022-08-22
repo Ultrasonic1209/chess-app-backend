@@ -38,9 +38,9 @@ async def create_game(request: Request):
     player = models.Player()
     player.is_white = True
 
-    player.user_id = user.user_id if user else None
-    player.session_id = session.session_id if user is None else None
-
+    player.user = user
+    player.session = session if user is None else None
+    
     game = models.Game()
     game.players.append(player)
 
