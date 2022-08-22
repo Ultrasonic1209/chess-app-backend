@@ -38,7 +38,11 @@ async def create_game(request: Request):
     game.players.append(player)
 
     async with query_session.begin():
-        query_session.add_all(session, player, game)
+        query_session.add_all([
+            session,
+            player,
+            game
+        ])
 
     return json(dict(game_id=game.game_id))
 
