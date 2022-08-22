@@ -5,7 +5,7 @@ import datetime
 
 import chess
 import chess.pgn
-import jwt
+import jwt, secrets
 from sanic import Blueprint, text, json
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +29,7 @@ async def create_game(request: Request):
 
     if (user is None) and (session is None):
         session = models.Session()
+        session.session = secrets.token_hex(32)
         toadd.append(session)
 
     player = models.Player()
