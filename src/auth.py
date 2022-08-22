@@ -4,6 +4,7 @@ From https://sanic.dev/en/guide/how-to/authentication.html#auth.py
 from datetime import datetime
 from functools import wraps
 from typing import Optional
+from contextvars import ContextVar
 
 import jwt
 
@@ -17,6 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User, Session
 from classes import Request, Token
+
+_base_model_session_ctx = ContextVar("session")
 
 def check_token(request: sanic.Request) -> Optional[Token]:
     """
@@ -57,7 +60,7 @@ def is_logged_in(silent: bool = False):
                         else:
                             return text("Authorisation has expired.", 401)
 
-                session: AsyncSession = request.ctx.session
+                session: AsyncSession = _base_model_session_ctx.get()
 
                 stmt = select(Session).where(
                     Session.session == token["session"]
