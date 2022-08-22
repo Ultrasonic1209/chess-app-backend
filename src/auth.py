@@ -57,6 +57,8 @@ async def authenticate_request(request: Request):
             Session.session == token["session"]
         ).with_hint(Session, "USE INDEX (ix_Session_session)")
 
+        logger.info(stmt)
+
         async with session.begin():
             user_session_result: Result = await session.execute(stmt)
 
