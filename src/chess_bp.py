@@ -40,7 +40,7 @@ async def create_game(request: Request):
 
     player.user = user
     player.session = session if user is None else None
-    
+
     game = models.Game()
     game.players.append(player)
 
