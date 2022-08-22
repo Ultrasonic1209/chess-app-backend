@@ -12,7 +12,7 @@ force_auto_coercion()
 
 metadata_obj = MetaData()
 
-__all__ = ["Base", "User", "Player", "Game"]
+__all__ = ["Base", "User", "Player", "Game", "Session"]
 
 Base = declarative_base()
 
@@ -38,17 +38,41 @@ class User(BaseModel):
 
     __tablename__ = "User"
 
-    user_id = Column(INTEGER(), primary_key=True)
-
-    username = Column(String(50), nullable=False, unique=True)
-    password = Column(
-        PasswordType(schemes=["pbkdf2_sha512"]), nullable=False
+    user_id = Column(
+        INTEGER(),
+        primary_key=True
     )
-    email = Column(EmailType(length=100), nullable=True)
-    time_created = Column(TIMESTAMP(), nullable=False)
 
-    players = relationship("Player", back_populates="user")
-    sessions = relationship("Session", back_populates="user")
+    username = Column(
+        String(50),
+        nullable=False,
+        unique=True
+
+    )
+    password = Column(
+        PasswordType(schemes=["pbkdf2_sha512"]),
+        nullable=False
+    )
+
+    email = Column(
+        EmailType(length=100),
+        nullable=True
+    )
+
+    time_created = Column(
+        TIMESTAMP(),
+        nullable=False
+    )
+
+    players = relationship(
+        "Player",
+        back_populates="user"
+    )
+
+    sessions = relationship(
+        "Session",
+        back_populates="user"
+    )
 
     def to_dict(self):
         return {
@@ -65,15 +89,44 @@ class Player(BaseModel):
 
     __tablename__ = "Player"
 
-    game_id = Column(ForeignKey("Game.game_id"), nullable=False, primary_key=True)
-    is_white = Column(BOOLEAN(), nullable=False, primary_key=True)
+    game_id = Column(
+        ForeignKey("Game.game_id"),
+        nullable=False,
+        primary_key=True
+    )
 
-    user_id = Column(ForeignKey("User.user_id"), nullable=True)
-    session_id = Column(ForeignKey("Session.user_id"), nullable=True)
+    is_white = Column(
+        BOOLEAN(),
+        nullable=False,
+        primary_key=True
+    )
 
-    user = relationship("User", back_populates="players", uselist=False)
-    game = relationship("Game", back_populates="players", uselist=False)
-    session = relationship("Session", uselist=False)
+    user_id = Column(
+        ForeignKey("User.user_id"),
+        nullable=True
+    )
+
+    session_id = Column(
+        ForeignKey("Session.user_id"),
+        nullable=True
+    )
+
+    user = relationship(
+        "User",
+        back_populates="players",
+        uselist=False
+    )
+
+    game = relationship(
+        "Game",
+        back_populates="players",
+        uselist=False
+    )
+
+    session = relationship(
+        "Session",
+        uselist=False
+    )
 
     def to_dict(self):
         return {
@@ -90,14 +143,35 @@ class Game(BaseModel):
 
     __tablename__ = "Game"
 
-    game_id = Column(INTEGER(), primary_key=True)
+    game_id = Column(
+        INTEGER(),
+        primary_key=True
+    )
 
-    moves = Column(String(1024), nullable=True)
-    time_started = Column(TIMESTAMP(), nullable=False)
-    time_ended = Column(TIMESTAMP(), nullable=True)
-    white_won = Column(BOOLEAN(), nullable=True)
+    moves = Column(
+        String(1024),
+        nullable=True
+    )
 
-    players = relationship("Player", back_populates="game")
+    time_started = Column(
+        TIMESTAMP(),
+        nullable=False
+    )
+
+    time_ended = Column(
+        TIMESTAMP(),
+        nullable=True
+    )
+
+    white_won = Column(
+        BOOLEAN(),
+        nullable=True
+    )
+
+    players = relationship(
+        "Player",
+        back_populates="game"
+    )
 
     def to_dict(self):
         return {
@@ -114,8 +188,27 @@ class Session(Base):
 
     __tablename__ = "Session"
 
-    session_id = Column(INTEGER(), primary_key=True)
-    session = Column(String(256), primary_key=False, nullable=False, unique=True, index=True)
+    session_id = Column(
+        INTEGER(),
+        nullable=False,
+        primary_key=True
+    )
 
-    user_id = Column(ForeignKey("User.user_id"), nullable=True)
-    user = relationship("User", back_populates="sessions", uselist=False)
+    session = Column(
+        String(256),
+        primary_key=False,
+        nullable=False,
+        unique=True, 
+        index=True
+    )
+
+    user_id = Column(
+        ForeignKey("User.user_id"),
+        nullable=True
+    )
+
+    user = relationship(
+        "User",
+        back_populates="sessions",
+        uselist=False
+    )
