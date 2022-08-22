@@ -212,7 +212,7 @@ async def do_logout(request: Request, profile: models.User, session: models.Sess
     logger.info(session)
 
     async with query_session.begin():
-        query_session.expunge(session)
+        await query_session.delete(session)
 
     response = json({"success": True})
     del response.cookies[".CHECKMATESECRET"]
