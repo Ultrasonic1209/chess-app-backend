@@ -38,20 +38,14 @@ async def create_game(request: Request):
     player = models.Player()
     player.is_white = True
 
-    if user:
-        player.user = user
-    else:
-        logger.info("lol!")
-        logger.info(session)
-        player.session = session
-        logger.info(player)
-        logger.info(player.session)
+    player.user_id = user.user_id
+    player.session_id = session.session_id if user is None else None
 
     game = models.Game()
     game.players.append(player)
 
     async with query_session.begin():
-        query_session.add_all([game, player])
+        query_session.add_all([player, game])
 
     response = json(dict(game_id=game.game_id))
 
