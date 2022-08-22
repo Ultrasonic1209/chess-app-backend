@@ -127,7 +127,6 @@ class Player(BaseModel):
         back_populates="players",
         uselist=False,
         lazy=_LAZYMETHOD,
-        uselist=False
     )
 
     session = relationship(
