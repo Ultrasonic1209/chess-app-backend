@@ -13,6 +13,7 @@ import jwt
 import httpx
 
 from sanic import Blueprint, json
+from sanic.log import logger
 from sanic_ext import validate, openapi
 
 from sqlalchemy import select
@@ -207,6 +208,8 @@ async def do_logout(request: Request, profile: models.User, session: models.Sess
     Removes JSON Web Token and destroys the session.
     """
     query_session: AsyncSession = request.ctx.session
+
+    logger.info(session)
 
     async with query_session.begin():
         query_session.expunge(session)
