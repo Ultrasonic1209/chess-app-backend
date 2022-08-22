@@ -5,12 +5,14 @@ import datetime
 
 import chess
 import chess.pgn
+import jwt
 from sanic import Blueprint, text, json
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from classes import Request
 from auth import authenticate_request
+from login import get_hostname
 import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
@@ -23,28 +25,46 @@ async def create_game(request: Request):
     query_session: AsyncSession = request.ctx.session
     user, session = await authenticate_request(request=request)
 
+    toadd = []
+
     if (user is None) and (session is None):
         session = models.Session()
+        toadd.append(session)
 
     player = models.Player()
     player.is_white = True
 
     if user:
-        player.user = user
+        player.user_id = user.user_id
     else:
-        player.session = session
+        player.session_id = session.session_id
 
     game = models.Game()
     game.players.append(player)
 
-    async with query_session.begin():
-        query_session.add_all([
-            session,
-            player,
-            game
-        ])
+    toadd.extend([player, game])
 
-    return json(dict(game_id=game.game_id))
+    async with query_session.begin():
+        query_session.add_all(toadd)
+
+    response = json(dict(game_id=game.game_id))
+
+    if len(toadd) > 2:
+        payload = {
+            'user_id': None,
+            'session': session.session_id,
+            'expires': None
+        }
+
+        token = jwt.encode(payload, request.app.config.SECRET)
+
+        response.cookies[".CHECKMATESECRET"] = token
+        response.cookies[".CHECKMATESECRET"]["secure"] = True
+        response.cookies[".CHECKMATESECRET"]["samesite"] = "Lax"
+        response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
+        response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
+
+    return response
 
 @chess_blueprint.get("/starter")
 async def chess_board(request: Request):
