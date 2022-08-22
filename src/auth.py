@@ -11,9 +11,10 @@ from sanic import text, json
 import sanic
 from sanic.log import logger
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import User
+from models import User, Session
 from classes import Request, Token
 
 def check_token(request: sanic.Request) -> Optional[Token]:
@@ -59,7 +60,14 @@ def is_logged_in(silent: bool = False):
 
                 logger.info(token)
 
+                stmt = select(Session).where(
+                    Session.session == token["session"]
+                ).with_hint(Session, "USE INDEX (ix_Session_session)")
+
+                logger.info(stmt)
+
                 async with session.begin():
+                    #user_session: Session = await session
                     user: User = await session.get(User, token["user_id"])
 
                 response = await func(request, *args, **kwargs, profile=user, token=token)
