@@ -28,23 +28,24 @@ async def create_game(request: Request):
     query_session: AsyncSession = request.ctx.session
     user, session = await authenticate_request(request=request)
 
-    if session is None: # no session = no user either
-        session = models.Session()
-        session.session = secrets.token_hex(32)
-
-        async with query_session.begin():
-            query_session.add(session)
-
-    player = models.Player()
-    player.is_white = True
-
-    player.user = user
-    player.session = session if user is None else None
-
-    game = models.Game()
-    game.players.append(player)
-
     async with query_session.begin():
+
+        if session is None: # no session = no user either
+            session = models.Session()
+            session.session = secrets.token_hex(32)
+
+            async with query_session.begin_nested():
+                query_session.add(session)
+
+        player = models.Player()
+        player.is_white = True
+
+        player.user = user
+        player.session = session if user is None else None
+
+        game = models.Game()
+        game.players.append(player)
+
         query_session.add_all([player, game])
 
     response = json(dict(game_id=game.game_id))
