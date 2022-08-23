@@ -95,14 +95,14 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
             async with query_session.begin_nested():
                 query_session.add(session)
 
-        game: Optional[models.Game] = await query_session.get(models.Game, gameid)
+        game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
 
         if game is None:
             return json({"message": "game does not exist"})
 
-        await query_session.refresh(game)
+        #await query_session.refresh(game)
 
-        if game.players >= 2:
+        if len(game.players) >= 2:
             return json({"message": "game cannot be joined"})
 
         if await query_session.get(models.Player, (game.game_id, wants_white)):
