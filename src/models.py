@@ -185,7 +185,7 @@ class Game(BaseModel):
         return {
             "game_id": self.game_id,
             "time_started": self.time_started.isoformat(),
-            "time_ended": self.time_ended.isoformat(),
+            "time_ended": self.time_ended.isoformat() if self.time_ended else None,
             "white_won": self.white_won,
             "players": [{"user": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players]
         }
