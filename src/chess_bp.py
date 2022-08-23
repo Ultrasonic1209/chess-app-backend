@@ -81,7 +81,7 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
     """
     If someone wants to enter a game, they need only use this endpoint.
     """
-    wantsWhite = body.wantsWhite or bool(random.getrandbits(1))
+    wants_white = body.wantsWhite or bool(random.getrandbits(1))
 
     query_session: AsyncSession = request.ctx.session
     user, session = await authenticate_request(request=request)
@@ -103,9 +103,9 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
         if game.players >= 2:
             return json({"message": "game cannot be joined"})
 
-        if query_session.get(models.Player, (game.game_id, wantsWhite)):
+        if await query_session.get(models.Player, (game.game_id, wants_white)):
             if body.wantsWhite is None:
-                wantsWhite = not wantsWhite
+                wants_white = not wants_white
             else:
                 return json({"message": "colour is not available"})
 
@@ -115,7 +115,7 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
         player.user = user
         player.session = session if session.user is None else None
 
-        player.is_white = body.wantsWhite or False
+        player.is_white = wants_white
 
         query_session.add(player)
 
