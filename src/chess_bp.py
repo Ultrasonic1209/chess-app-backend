@@ -32,7 +32,7 @@ chess_blueprint = Blueprint("chess", url_prefix="/chess")
 async def create_game(request: Request, body: NewChessGameOptions):
     """
     Creates a chess game in the database, being logged in is optional
-    TODO add creation options
+    TODO make creation options work
     """
     query_session: AsyncSession = request.ctx.session
     user, session = await authenticate_request(request=request)
@@ -47,7 +47,7 @@ async def create_game(request: Request, body: NewChessGameOptions):
                 query_session.add(session)
 
         player = models.Player()
-        player.is_white = True
+        player.is_white = body.creatorStartsWhite
 
         player.user = user
         player.session = session if user is None else None
