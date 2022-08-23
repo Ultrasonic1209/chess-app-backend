@@ -180,7 +180,7 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
             pgn_string = pgn.accept(exporter)
 
             game.time_started = time
-            game.moves = pgn_string
+            game.game = pgn_string
 
 
     response = empty()
