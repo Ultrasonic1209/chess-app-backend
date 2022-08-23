@@ -25,6 +25,9 @@ import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
+# TODO: add a decorator to ensure a session exists instead of copy pasting session code
+# maybe under `auth.py`?
+
 @chess_blueprint.post("/game")
 @openapi.body(NewChessGameOptions)
 @openapi.response(status=201, content={"application/json": NewChessGameResponse})
