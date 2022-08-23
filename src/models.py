@@ -115,7 +115,7 @@ class Player(BaseModel):
         nullable=True
     )
 
-    user = relationship(
+    user: Optional[User] = relationship(
         "User",
         back_populates="players",
         uselist=False,
@@ -187,6 +187,7 @@ class Game(BaseModel):
             "time_started": self.time_started.isoformat(),
             "time_ended": self.time_ended.isoformat(),
             "white_won": self.white_won,
+            "players": [{"user": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players]
         }
 
 class Session(Base):

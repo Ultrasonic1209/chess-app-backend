@@ -73,10 +73,26 @@ async def create_game(request: Request):
 
     return response
 
+@chess_blueprint.get("/game/<gameid:int>")
+@openapi.response(status=404, content={"application/json": Message}, description="When you forgot to make the game")
+async def get_game(request: Request, gameid: int):
+    
+    query_session: AsyncSession = request.ctx.session
+
+    async with query_session.begin():
+        game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
+
+        if game is None:
+            return json({"message": "game does not exist"}, status=404)
+
+    return json(game.to_dict())
+
+
 @chess_blueprint.patch("/game/<gameid:int>/enter")
 @openapi.body(ChessEntry)
 @openapi.response(status=204, description="When you've entered the game sucessfully")
 @openapi.response(status=401, content={"application/json": Message}, description="When you didnt get the game you wanted")
+@openapi.response(status=404, content={"application/json": Message}, description="When you forgot to make the game")
 @validate(json=dataclass(ChessEntry))
 async def enter_game(request: Request, gameid: int, body: ChessEntry):
     """
@@ -99,7 +115,7 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
         game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
 
         if game is None:
-            return json({"message": "game does not exist"}, status=401)
+            return json({"message": "game does not exist"}, status=404)
 
         for player in game.players:
             if (player.user == user) or (player.session == session):
