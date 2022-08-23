@@ -18,7 +18,7 @@ from sanic_ext import validate, openapi
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, Message
+from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message
 from auth import authenticate_request
 from login import get_hostname
 import models
@@ -26,8 +26,10 @@ import models
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
 @chess_blueprint.post("/game")
+@openapi.body(NewChessGameOptions)
 @openapi.response(status=201, content={"application/json": NewChessGameResponse})
-async def create_game(request: Request):
+@validate(json=dataclass(NewChessGameOptions))
+async def create_game(request: Request, body: NewChessGameOptions):
     """
     Creates a chess game in the database, being logged in is optional
     TODO add creation options

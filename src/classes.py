@@ -94,9 +94,19 @@ class NewChessGameResponse:
 
     gameid: int
 
+class NewChessGameOptions:
+    """
+    Options that can be given for how the game should be created
+    """
+
+    creatorStartsWhite: bool
+    timer: bool
+    timeLimit: Optional[int]
+
 class ChessEntry:
     """
     Options that can be given for how you wish to enter a chess game
     """
 
     wantsWhite: Optional[bool]
+
