@@ -72,4 +72,4 @@ class ChessEntry:
     Options that can be given for how you wish to enter a chess game
     """
 
-    wantsWhite: bool
+    wantsWhite: Optional[bool]

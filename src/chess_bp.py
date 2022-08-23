@@ -96,10 +96,15 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
 
         if game is None:
             return json({"message": "game does not exist"})
-        else:
-            logger.info("game?")
-            logger.info(game)
-  
+
+        player = models.Player()
+        player.game = game
+
+        player.user = user
+        player.session = session if session.user is None else None
+
+        player.is_white = body.wantsWhite or False
+
 
     response = empty()
 
