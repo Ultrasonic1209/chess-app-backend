@@ -18,7 +18,7 @@ from sanic_ext import validate, openapi
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from classes import Request, ChessEntry, NewChessGameResponse
+from classes import Request, ChessEntry, NewChessGameResponse, Message
 from auth import authenticate_request
 from login import get_hostname
 import models
@@ -76,6 +76,7 @@ async def create_game(request: Request):
 @chess_blueprint.patch("/game/<gameid:int>/enter")
 @openapi.body(ChessEntry)
 @openapi.response(status=204, description="When you've entered the game sucessfully")
+@openapi.response(status=401, content={"application/json": Message}, description="When you didnt get the game you wanted")
 @validate(json=dataclass(ChessEntry))
 async def enter_game(request: Request, gameid: int, body: ChessEntry):
     """
@@ -98,18 +99,20 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
         game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
 
         if game is None:
-            return json({"message": "game does not exist"})
+            return json({"message": "game does not exist"}, status=401)
 
-        #await query_session.refresh(game)
+        for player in game.players:
+            if (player.user == user) or (player.session == session):
+                return json({"message": "you are already in this game"}, status=401)
 
         if len(game.players) >= 2:
-            return json({"message": "game cannot be joined"})
+            return json({"message": "game cannot be joined"}, status=401)
 
         if await query_session.get(models.Player, (game.game_id, wants_white)):
             if body.wantsWhite is None:
                 wants_white = not wants_white
             else:
-                return json({"message": "colour is not available"})
+                return json({"message": "colour is not available"}, status=401)
 
         player = models.Player()
         player.game = game

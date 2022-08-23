@@ -42,6 +42,13 @@ class Token(TypedDict):
     session: str
     expires: Optional[float]
 
+class Message:
+    """
+    One field: message
+    """
+
+    message: str
+
 class LoginResponse:
     """
     Classes the response from /login
