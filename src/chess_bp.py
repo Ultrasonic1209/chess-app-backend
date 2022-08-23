@@ -4,6 +4,7 @@ Will handle everything related to chess games.
 from dataclasses import dataclass
 import datetime
 import secrets
+import random
 from typing import Optional
 
 import chess
@@ -80,6 +81,8 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
     """
     If someone wants to enter a game, they need only use this endpoint.
     """
+    wantsWhite = body.wantsWhite or bool(random.getrandbits(1))
+
     query_session: AsyncSession = request.ctx.session
     user, session = await authenticate_request(request=request)
 
@@ -96,6 +99,15 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
 
         if game is None:
             return json({"message": "game does not exist"})
+
+        if game.players >= 2:
+            return json({"message": "game cannot be joined"})
+
+        if query_session.get(models.Player, (game.game_id, wantsWhite)):
+            if body.wantsWhite is None:
+                wantsWhite = not wantsWhite
+            else:
+                return json({"message": "colour is not available"})
 
         player = models.Player()
         player.game = game
