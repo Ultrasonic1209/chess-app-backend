@@ -157,8 +157,8 @@ class Game(BaseModel):
         primary_key=True
     )
 
-    moves = Column(
-        String(1024),
+    game = Column(
+        String(2048),
         nullable=True
     )
 
@@ -189,7 +189,8 @@ class Game(BaseModel):
             "time_started": self.time_started.isoformat() if self.time_started else None,
             "time_ended": self.time_ended.isoformat() if self.time_ended else None,
             "white_won": self.white_won,
-            "players": [{"userId": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players]
+            "players": [{"userId": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players],
+            "game": self.game
         }
 
 class Session(Base):
