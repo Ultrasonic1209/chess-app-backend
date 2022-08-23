@@ -4,6 +4,7 @@ Will handle everything related to chess games.
 from dataclasses import dataclass
 import datetime
 import secrets
+from typing import Optional
 
 import chess
 import chess.pgn
@@ -91,12 +92,13 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
             async with query_session.begin_nested():
                 query_session.add(session)
 
-            game = await session.get(models.Game, gameid)
-
-            logger.info(game)
+            game: Optional[models.Game] = await session.get(models.Game, gameid)
 
             if game is None:
                 return json({"message": "game does not exist"})
+            else:
+                logger.info("game?")
+                logger.info(game)
             
 
     response = empty()
