@@ -13,7 +13,7 @@ import jwt
 
 from sanic import Blueprint
 from sanic.response import text, json, empty
-from sanic.log import logger
+#from sanic.log import logger
 from sanic_ext import validate, openapi
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,6 +30,7 @@ chess_blueprint = Blueprint("chess", url_prefix="/chess")
 async def create_game(request: Request):
     """
     Creates a chess game in the database, being logged in is optional
+    TODO add creation options
     """
     query_session: AsyncSession = request.ctx.session
     user, session = await authenticate_request(request=request)
