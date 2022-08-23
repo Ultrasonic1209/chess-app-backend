@@ -144,6 +144,44 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
 
         query_session.add(player)
 
+        if len(game.players) == 2:
+            # start the game!    
+
+            time = datetime.datetime.now()
+
+            white: models.Player
+            black: models.Player
+
+            for player in game.players:
+                if player.is_white:
+                    white = player
+                else:
+                    black = player
+
+            pgn = chess.pgn.Game({
+                "Event": "Checkmate Chess Game",
+                "Site": "chessapp.ultras-playroom.xyz",
+                "Date": time.strftime(r"%Y.%m.%d"),
+                "Round": 1,
+                "White": white.user.username if white.user else "Anonymous",
+                "Black": black.user.username if black.user else "Anonymous",
+                "Result": "*",
+
+                "Annotator": "Checkmate",
+                #PlyCount
+                #TimeControl
+                "Time": time.strftime(r"%H:%M:%S"),
+                "Termination": "unterminated",
+                "Mode": "ICS",
+                #FEN
+            })
+
+            exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+            pgn_string = pgn.accept(exporter)
+
+            game.time_started = time
+            game.moves = pgn_string
+
 
     response = empty()
 

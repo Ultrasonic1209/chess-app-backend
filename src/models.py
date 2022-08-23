@@ -164,7 +164,7 @@ class Game(BaseModel):
 
     time_started = Column(
         TIMESTAMP(),
-        nullable=False
+        nullable=True
     )
 
     time_ended = Column(
@@ -186,7 +186,7 @@ class Game(BaseModel):
     def to_dict(self) -> classes.PublicChessGame:
         return {
             "game_id": self.game_id,
-            "time_started": self.time_started.isoformat(),
+            "time_started": self.time_started.isoformat() if self.time_started else None,
             "time_ended": self.time_ended.isoformat() if self.time_ended else None,
             "white_won": self.white_won,
             "players": [{"userId": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players]
