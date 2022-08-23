@@ -75,7 +75,7 @@ async def create_game(request: Request):
 @openapi.body(ChessEntry)
 @openapi.response(status=204, description="When you've entered the game sucessfully")
 @validate(json=dataclass(ChessEntry))
-async def enter_game(request: Request, params: ChessEntry, gameid: int):
+async def enter_game(request: Request, gameid: int, body: ChessEntry):
     """
     If someone wants to enter a game, they need only use this endpoint.
     """
