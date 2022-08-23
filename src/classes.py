@@ -59,3 +59,17 @@ class LoginBody:
     # pylint: disable=invalid-name
     rememberMe: bool
     frcCaptchaSolution: str
+
+class NewChessGameResponse:
+    """
+    What you get when you create a game
+    """
+
+    gameid: int
+
+class ChessEntry:
+    """
+    Options that can be given for how you wish to enter a chess game
+    """
+
+    wantsWhite: bool

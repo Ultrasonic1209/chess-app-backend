@@ -1,26 +1,30 @@
 """
 Will handle everything related to chess games.
 """
+from dataclasses import dataclass
 import datetime
+import secrets
 
 import chess
 import chess.pgn
 import jwt
-import secrets
 
-from sanic import Blueprint, text, json
+from sanic import Blueprint
+from sanic.response import text, json, empty
 from sanic.log import logger
+from sanic_ext import validate, openapi
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from classes import Request
+from classes import Request, ChessEntry, NewChessGameResponse
 from auth import authenticate_request
 from login import get_hostname
 import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
-@chess_blueprint.post("/create-game")
+@chess_blueprint.post("/game")
+@openapi.response(status=201, content={"application/json": NewChessGameResponse}, description="When the game is made")
 async def create_game(request: Request):
     """
     Creates a chess game in the database, being logged in is optional
@@ -48,7 +52,7 @@ async def create_game(request: Request):
 
         query_session.add_all([player, game])
 
-    response = json(dict(game_id=game.game_id))
+    response = json(dict(game_id=game.game_id), status=201)
 
     if session.user is None: # userless session
         payload = {
@@ -66,6 +70,54 @@ async def create_game(request: Request):
         response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
 
     return response
+
+@chess_blueprint.patch("/game/<gameid:int>/enter")
+@openapi.body(ChessEntry)
+@openapi.response(status=204, description="When you've entered the game sucessfully")
+@validate(json=dataclass(ChessEntry))
+async def enter_game(request: Request, gameid: int):
+    """
+    If someone wants to enter a game, they need only use this endpoint.
+    """
+    query_session: AsyncSession = request.ctx.session
+    user, session = await authenticate_request(request=request)
+
+    async with query_session.begin():
+
+        if session is None: # no session = no user either
+            session = models.Session()
+            session.session = secrets.token_hex(32)
+
+            async with query_session.begin_nested():
+                query_session.add(session)
+
+            game = await session.get(models.Game, gameid)
+
+            logger.info(game)
+
+            if game is None:
+                return json({"message": "game does not exist"})
+            
+
+    response = empty()
+
+    if session.user is None: # userless session
+        payload = {
+            'user_id': None,
+            'session': session.session,
+            'expires': None
+        }
+
+        token = jwt.encode(payload, request.app.config.SECRET)
+
+        response.cookies[".CHECKMATESECRET"] = token
+        response.cookies[".CHECKMATESECRET"]["secure"] = True
+        response.cookies[".CHECKMATESECRET"]["samesite"] = "Lax"
+        response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
+        response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
+
+    return response
+
 
 @chess_blueprint.get("/starter")
 async def chess_board(request: Request):
