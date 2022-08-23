@@ -100,7 +100,7 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
         if game is None:
             return json({"message": "game does not exist"})
 
-        await query_session.refresh()
+        await query_session.refresh(game)
 
         if game.players >= 2:
             return json({"message": "game cannot be joined"})
