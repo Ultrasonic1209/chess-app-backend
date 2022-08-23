@@ -17,7 +17,7 @@ __all__ = ["Base", "User", "Player", "Game", "Session"]
 
 Base = declarative_base()
 
-_LAZYMETHOD = "joined"
+_LAZYMETHOD = "subquery"
 
 class BaseModel(Base):
     """
