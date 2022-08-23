@@ -92,13 +92,13 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
             async with query_session.begin_nested():
                 query_session.add(session)
 
-            game: Optional[models.Game] = await session.get(models.Game, gameid)
+        game: Optional[models.Game] = await session.get(models.Game, gameid)
 
-            if game is None:
-                return json({"message": "game does not exist"})
-            else:
-                logger.info("game?")
-                logger.info(game)
+        if game is None:
+            return json({"message": "game does not exist"})
+        else:
+            logger.info("game?")
+            logger.info(game)
             
 
     response = empty()
