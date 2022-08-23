@@ -18,7 +18,7 @@ from sanic_ext import validate, openapi
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from classes import Request, ChessEntry, NewChessGameResponse, Message
+from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, Message
 from auth import authenticate_request
 from login import get_hostname
 import models
@@ -26,7 +26,7 @@ import models
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
 @chess_blueprint.post("/game")
-@openapi.response(status=201, content={"application/json": NewChessGameResponse}, description="When the game is made")
+@openapi.response(status=201, content={"application/json": NewChessGameResponse})
 async def create_game(request: Request):
     """
     Creates a chess game in the database, being logged in is optional
@@ -74,9 +74,13 @@ async def create_game(request: Request):
     return response
 
 @chess_blueprint.get("/game/<gameid:int>")
-@openapi.response(status=404, content={"application/json": Message}, description="When you forgot to make the game")
+@openapi.response(status=404, content={"application/json": Message})
+@openapi.response(status=200, content={"application/json": PublicChessGame})
 async def get_game(request: Request, gameid: int):
-    
+    """
+    Retrieves game status
+    """
+
     query_session: AsyncSession = request.ctx.session
 
     async with query_session.begin():
@@ -90,9 +94,9 @@ async def get_game(request: Request, gameid: int):
 
 @chess_blueprint.patch("/game/<gameid:int>/enter")
 @openapi.body(ChessEntry)
-@openapi.response(status=204, description="When you've entered the game sucessfully")
-@openapi.response(status=401, content={"application/json": Message}, description="When you didnt get the game you wanted")
-@openapi.response(status=404, content={"application/json": Message}, description="When you forgot to make the game")
+@openapi.response(status=204)
+@openapi.response(status=401, content={"application/json": Message})
+@openapi.response(status=404, content={"application/json": Message})
 @validate(json=dataclass(ChessEntry))
 async def enter_game(request: Request, gameid: int, body: ChessEntry):
     """

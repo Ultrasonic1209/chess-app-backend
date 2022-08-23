@@ -2,7 +2,7 @@
 Holds shared classes that don't fit into `models.py`
 """
 
-from typing import Optional, TypedDict
+from typing import List, Optional, TypedDict
 from sanic import Sanic
 from sanic import Request as SanicRequest
 from sanic_ext import Config
@@ -66,6 +66,25 @@ class LoginBody:
     # pylint: disable=invalid-name
     rememberMe: bool
     frcCaptchaSolution: str
+
+class PublicChessPlayer(TypedDict):
+    """
+    what everyone gets to know about any chess player
+    """
+
+    userId: Optional[int]
+    isWhite: bool
+
+class PublicChessGame(TypedDict):
+    """
+    what everyone gets to know about any chess game
+    """
+
+    game_id: int
+    time_started: str
+    time_ended: Optional[str]
+    white_won: Optional[bool]
+    players: List[PublicChessPlayer]
 
 class NewChessGameResponse:
     """

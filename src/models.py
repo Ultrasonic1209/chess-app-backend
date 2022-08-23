@@ -9,6 +9,8 @@ from sqlalchemy import MetaData
 
 from sqlalchemy_utils import PasswordType, EmailType, force_auto_coercion
 
+import classes
+
 force_auto_coercion()
 
 metadata_obj = MetaData()
@@ -181,13 +183,13 @@ class Game(BaseModel):
         lazy=_LAZYMETHOD
     )
 
-    def to_dict(self):
+    def to_dict(self) -> classes.PublicChessGame:
         return {
             "game_id": self.game_id,
             "time_started": self.time_started.isoformat(),
             "time_ended": self.time_ended.isoformat() if self.time_ended else None,
             "white_won": self.white_won,
-            "players": [{"user": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players]
+            "players": [{"userId": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players]
         }
 
 class Session(Base):
