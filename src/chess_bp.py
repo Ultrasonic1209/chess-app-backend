@@ -105,6 +105,8 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
 
         player.is_white = body.wantsWhite or False
 
+        query_session.add(player)
+
 
     response = empty()
 
