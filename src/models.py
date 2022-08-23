@@ -17,7 +17,7 @@ __all__ = ["Base", "User", "Player", "Game", "Session"]
 
 Base = declarative_base()
 
-_LAZYMETHOD = "selectin"
+_LAZYMETHOD = "joined"
 
 class BaseModel(Base):
     """
