@@ -216,7 +216,11 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         chessgame.end().add_line([chess.Move.from_uci(params.san)])
 
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
-        pgn_string = chessgame.accept(exporter)
+
+        try:
+            pgn_string = chessgame.accept(exporter)
+        except AssertionError:
+            return json({"message": "invalid move"}, status=400)
 
         game.game = pgn_string
 
