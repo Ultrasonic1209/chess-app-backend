@@ -107,7 +107,7 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry, user: mode
     """
     If someone wants to enter a game, they need only use this endpoint.
     """
-    wants_white = body.wantsWhite or bool(random.getrandbits(1))
+    wants_white = bool(random.getrandbits(1)) if body.wantsWhite is None else body.wantsWhite
 
     query_session: AsyncSession = request.ctx.session
 

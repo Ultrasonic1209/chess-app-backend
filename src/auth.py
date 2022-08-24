@@ -109,7 +109,7 @@ def is_logged_in(silent: bool = False):
 def has_session(create: bool = True):
     """
     Ensures all requests to anything wrapped with this decorator has a session, creating one if necessary.
-    Passes a user as well,
+    Passes a user as well
     """
     def decorator(func):
         @wraps(func)
