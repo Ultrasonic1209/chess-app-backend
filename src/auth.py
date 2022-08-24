@@ -4,6 +4,7 @@ From https://sanic.dev/en/guide/how-to/authentication.html#auth.py
 from datetime import datetime
 from functools import wraps
 from typing import Optional
+from urllib.parse import urlparse
 import secrets
 
 import jwt
@@ -19,7 +20,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import User, Session
 from classes import Request, Token
 
-from login import get_hostname
+def get_hostname(url, uri_type='netloc_only'):
+    """Get the host name from the url"""
+    parsed_uri = urlparse(url)
+    if uri_type == 'both':
+        return '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
+    if uri_type == 'netloc_only':
+        return parsed_uri.netloc
+    return ''
 
 def check_token(request: sanic.Request) -> Optional[Token]:
     """

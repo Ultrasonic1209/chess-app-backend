@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message
 
 from auth import has_session
-from login import get_hostname
+from auth import get_hostname
 
 import models
 

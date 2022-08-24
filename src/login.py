@@ -6,7 +6,6 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from urllib.parse import urlparse
 import secrets
 
 import jwt
@@ -20,19 +19,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 
-from auth import is_logged_in
+from auth import is_logged_in, get_hostname
 from classes import Request, LoginBody, LoginResponse
 
 import models
-
-def get_hostname(url, uri_type='netloc_only'):
-    """Get the host name from the url"""
-    parsed_uri = urlparse(url)
-    if uri_type == 'both':
-        return '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
-    if uri_type == 'netloc_only':
-        return parsed_uri.netloc
-    return ''
 
 HTTPX_CLIENT = httpx.AsyncClient()
 
