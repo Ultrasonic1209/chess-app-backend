@@ -220,7 +220,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
 
         game.game = pgn_string
 
-    return empty()    
+    return empty()
 
 @chess_blueprint.get("/starter")
 async def chess_board(request: Request):
