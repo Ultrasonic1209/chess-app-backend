@@ -9,7 +9,6 @@ from typing import Optional
 
 import chess
 import chess.pgn
-import jwt
 
 from sanic import Blueprint
 from sanic.response import text, json, empty
@@ -20,9 +19,9 @@ from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message
+from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove
 
-from auth import has_session, get_hostname
+from auth import has_session
 
 import models
 
@@ -180,6 +179,44 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
 
     return response
 
+@chess_blueprint.patch("/game/<gameid:int>/move")
+@openapi.body(NewChessMove)
+@openapi.response(status=204)
+@openapi.response(status=401, content={"application/json": Message})
+@openapi.response(status=404, content={"application/json": Message})
+@validate(json=dataclass(NewChessMove), body_argument="params")
+@has_session(create=False)
+async def make_move(request: Request, gameid: int, params: NewChessMove, user: models.User, session: models.Session):
+    """
+    lets players play!
+    """
+    query_session: AsyncSession = request.ctx.session
+
+    async with query_session.begin():
+
+        game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
+
+        if game is None:
+            return json({"message": "game does not exist"}, status=404)
+
+        user_player = None
+        for player in game.players:
+            if (player.user == user) or (player.session == session):
+                user_player = player
+
+        if user_player is None:
+            return json({"message": "you are not playing this game"}, status=401)
+
+        chessgame = chess.pgn.read_game(game.game)
+
+        chessgame.end().add_line(chess.Move.from_uci(params.san))
+
+        exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+        pgn_string = chessgame.accept(exporter)
+
+        game.game = pgn_string
+
+    return empty()        
 
 @chess_blueprint.get("/starter")
 async def chess_board(request: Request):

@@ -120,3 +120,9 @@ class ChessEntry:
 
     wantsWhite: Optional[bool]
 
+class NewChessMove:
+    """
+    So people can make moves on chess games!
+    """
+
+    san: str
