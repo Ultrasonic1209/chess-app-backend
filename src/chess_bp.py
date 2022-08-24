@@ -3,7 +3,7 @@ Will handle everything related to chess games.
 """
 from dataclasses import dataclass
 import datetime
-import secrets
+from io import StringIO
 import random
 from typing import Optional
 
@@ -211,7 +211,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         if user_player is None:
             return json({"message": "you are not playing this game"}, status=401)
 
-        chessgame = chess.pgn.read_game(game.game)
+        chessgame = chess.pgn.read_game(StringIO(game.game))
 
         chessgame.end().add_line(chess.Move.from_uci(params.san))
 
