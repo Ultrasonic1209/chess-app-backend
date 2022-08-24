@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_e
 from sqlalchemy.orm import sessionmaker
 
 from sanic import json, text
+from sanic_ext.extensions.openapi import constants
 
 from classes import App, AppConfig, Request
 from chess_bp import chess_blueprint as chessBp
@@ -51,6 +52,14 @@ app.ext.openapi.describe(
         This API is a work-in-progress. _Everything_ is subject to change.
         """
     ),
+)
+
+app.ext.openapi.add_security_scheme(
+    "JWT",
+    name=".CHECKMATESECRET",
+    type=constants.SecuritySchemeType.API_KEY,
+    location=constants.SecuritySchemeLocation.COOKIE,
+    description="JWT containing user id, secret, and expiry"
 )
 
 app.blueprint((
