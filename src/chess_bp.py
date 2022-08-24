@@ -182,6 +182,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
 @chess_blueprint.patch("/game/<gameid:int>/move")
 @openapi.body(NewChessMove)
 @openapi.response(status=204)
+@openapi.response(status=400, content={"application/json": Message})
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
 @validate(json=dataclass(NewChessMove), body_argument="params")
@@ -198,6 +199,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
 
         if game is None:
             return json({"message": "game does not exist"}, status=404)
+
+        if game.time_started is None:
+            return json({"message": "game has not started"}, status=400)
 
         user_player = None
         for player in game.players:
