@@ -192,7 +192,8 @@ class Game(BaseModel):
     )
 
     timer = Column(
-        ForeignKey("GameTimer.timer_id")
+        ForeignKey("GameTimer.timer_id"),
+        nullable=False
     )
 
     timeLimit = Column(

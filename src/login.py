@@ -76,9 +76,9 @@ async def verify_captcha(given_solution: str, fc_secret: str):
 @login.post("/")
 @openapi.body(LoginBody)
 @openapi.response(status=200, content={"application/json": LoginResponse}, description="When a valid login attempt is made")
-@validate(json=dataclass(LoginBody))
+@validate(json=dataclass(LoginBody), body_argument="params")
 @has_session()
-async def do_login(request: Request, body: LoginBody, user: models.User, session: models.Session):
+async def do_login(request: Request, params: LoginBody, user: models.User, session: models.Session):
     """
     Assigns JSON Web Token
     Captcha is provided by https://friendlycaptcha.com/
@@ -90,7 +90,7 @@ async def do_login(request: Request, body: LoginBody, user: models.User, session
             "userFacingMessage": "You are already logged in!"
         })
 
-    given_solution = body.frcCaptchaSolution
+    given_solution = params.frcCaptchaSolution
 
     captcha_resp = await verify_captcha(given_solution, request.app.config.FC_SECRET)
 
@@ -126,8 +126,8 @@ async def do_login(request: Request, body: LoginBody, user: models.User, session
 
     session: AsyncSession = request.ctx.session
 
-    username = body.username
-    password = body.password
+    username = params.username
+    password = params.password
 
     stmt = select(models.User).where(
         models.User.username == username
@@ -167,7 +167,7 @@ async def do_login(request: Request, body: LoginBody, user: models.User, session
 
         user.sessions.append(usersession)
 
-    expires = (datetime.now() + timedelta(weeks=4)).timestamp() if body.rememberMe else None
+    expires = (datetime.now() + timedelta(weeks=4)).timestamp() if params.rememberMe else None
 
     payload = {
         'user_id': user.user_id,
@@ -192,7 +192,7 @@ async def do_login(request: Request, body: LoginBody, user: models.User, session
     response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
     response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
 
-    if body.rememberMe:
+    if params.rememberMe:
         response.cookies[".CHECKMATESECRET"]["expires"] = datetime.fromtimestamp(expires)
 
     return response

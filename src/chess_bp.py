@@ -16,7 +16,9 @@ from sanic.response import text, json, empty
 #from sanic.log import logger
 from sanic_ext import validate, openapi
 
+from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message
 
@@ -29,51 +31,45 @@ chess_blueprint = Blueprint("chess", url_prefix="/chess")
 @chess_blueprint.post("/game")
 @openapi.body(NewChessGameOptions)
 @openapi.response(status=201, content={"application/json": NewChessGameResponse})
-@validate(json=dataclass(NewChessGameOptions))
+@validate(json=dataclass(NewChessGameOptions), body_argument="options")
 @has_session()
-async def create_game(request: Request, body: NewChessGameOptions, user: models.User, session: models.Session):
+async def create_game(request: Request, options: NewChessGameOptions, user: models.User, session: models.Session):
     """
     Creates a chess game in the database, being logged in is optional
     TODO make creation options work
     """
     query_session: AsyncSession = request.ctx.session
 
+    gtstmt = select(models.GameTimer).where(
+        models.GameTimer.timer_name == "Countdown" if options.countingDown else "Countup"
+    )
+
     async with query_session.begin():
 
-        if session is None: # no session = no user either
-            session = models.Session()
-            session.session = secrets.token_hex(32)
+        game_timer_result: Result = await query_session.execute(gtstmt)
 
-            async with query_session.begin_nested():
-                query_session.add(session)
+        game_timer_row = game_timer_result.first()
+
+        if not game_timer_row:
+            return json({"message": "[SERVER ERROR] game type was not found"}, status=500)
+
+        game_timer: models.GameTimer = game_timer_row["GameTimer"]
 
         player = models.Player()
-        player.is_white = body.creatorStartsWhite
+        player.is_white = options.creatorStartsWhite
 
         player.user = user
         player.session = session if user is None else None
 
         game = models.Game()
+        game.timer = game_timer
+        game.timeLimit = options.timeLimit
+
         game.players.append(player)
 
         query_session.add_all([player, game])
 
     response = json(dict(game_id=game.game_id), status=201)
-
-    if session.user is None: # userless session
-        payload = {
-            'user_id': None,
-            'session': session.session,
-            'expires': None
-        }
-
-        token = jwt.encode(payload, request.app.config.SECRET)
-
-        response.cookies[".CHECKMATESECRET"] = token
-        response.cookies[".CHECKMATESECRET"]["secure"] = True
-        response.cookies[".CHECKMATESECRET"]["samesite"] = "Lax"
-        response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
-        response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
 
     return response
 
@@ -101,13 +97,13 @@ async def get_game(request: Request, gameid: int):
 @openapi.response(status=204)
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
-@validate(json=dataclass(ChessEntry))
+@validate(json=dataclass(ChessEntry), body_argument="params")
 @has_session()
-async def enter_game(request: Request, gameid: int, body: ChessEntry, user: models.User, session: models.Session):
+async def enter_game(request: Request, gameid: int, params: ChessEntry, user: models.User, session: models.Session):
     """
     If someone wants to enter a game, they need only use this endpoint.
     """
-    wants_white = bool(random.getrandbits(1)) if body.wantsWhite is None else body.wantsWhite
+    wants_white = bool(random.getrandbits(1)) if params.wantsWhite is None else params.wantsWhite
 
     query_session: AsyncSession = request.ctx.session
 
@@ -126,7 +122,7 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry, user: mode
             return json({"message": "game cannot be joined"}, status=401)
 
         if await query_session.get(models.Player, (game.game_id, wants_white)):
-            if body.wantsWhite is None:
+            if params.wantsWhite is None:
                 wants_white = not wants_white
             else:
                 return json({"message": "colour is not available"}, status=401)

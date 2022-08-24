@@ -110,7 +110,7 @@ class NewChessGameOptions:
     """
 
     creatorStartsWhite: bool
-    timer: bool
+    countingDown: bool
     timeLimit: Optional[int]
 
 class ChessEntry:
