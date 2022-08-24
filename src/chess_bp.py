@@ -181,7 +181,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
 
 @chess_blueprint.patch("/game/<gameid:int>/move")
 @openapi.body(NewChessMove)
-@openapi.response(status=204)
+@openapi.response(status=200, content={"application/json": PublicChessGame}, description="The updated chess game")
 @openapi.response(status=400, content={"application/json": Message})
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
@@ -220,7 +220,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
 
         game.game = pgn_string
 
-    return empty()
+    return json(game.to_dict())
 
 @chess_blueprint.get("/starter")
 async def chess_board(request: Request):
