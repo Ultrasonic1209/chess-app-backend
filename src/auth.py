@@ -94,7 +94,7 @@ def is_logged_in(silent: bool = False):
             user, session = await authenticate_request(request=request)
 
             if user:
-                response = await func(request, *args, **kwargs, profile=user, session=session)
+                response = await func(request, *args, **kwargs, user=user, session=session)
                 return response
             else:
                 if silent:
@@ -127,7 +127,7 @@ def has_session(create: bool = True):
                     session.session = secrets.token_hex(32)
                     query_session.add(session)
 
-                response: sanic.HTTPResponse = await func(request, *args, **kwargs, profile=user, session=session)
+                response: sanic.HTTPResponse = await func(request, *args, **kwargs, user=user, session=session)
 
                 payload = {
                     'user_id': None,

@@ -192,7 +192,7 @@ async def do_login(request: Request, body: LoginBody):
 
 @login.delete("/logout")
 @is_logged_in(silent=True)
-async def do_logout(request: Request, profile: models.User, session: models.Session):
+async def do_logout(request: Request, user: models.User, session: models.Session):
     """
     Removes JSON Web Token and destroys the session.
     """
@@ -208,9 +208,9 @@ async def do_logout(request: Request, profile: models.User, session: models.Sess
 
 @login.get("/identify")
 @is_logged_in(silent=True)
-async def identify(request: Request, profile: models.User, session: models.Session):
+async def identify(request: Request, user: models.User, session: models.Session):
     """
     Returns the profile you are authenticating as.
     """
 
-    return json(profile.to_dict())
+    return json(user.to_dict())
