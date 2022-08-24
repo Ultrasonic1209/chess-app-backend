@@ -142,9 +142,17 @@ async def sql_initalise(request: Request):
         user.password = "ha"
         user.email = "email@example.com"
 
-        session.add(user)
+        countup = models.GameTimer()
+        countup.timer_name = "Countup"
 
-        await session.commit()
+        countdown = models.GameTimer()
+        countdown.timer_name = "Countdown"
+
+        session.add_all([
+            user,
+            countup,
+            countdown
+        ])
 
     assert user.password == "ha"
 

@@ -34,7 +34,6 @@ class BaseModel(Base):
         """
         return {}
 
-
 class User(BaseModel):
     """
     Each Checkmate user account has this.
@@ -48,7 +47,7 @@ class User(BaseModel):
     )
 
     username = Column(
-        String(50),
+        String(63),
         nullable=False,
         unique=True
 
@@ -59,7 +58,7 @@ class User(BaseModel):
     )
 
     email = Column(
-        EmailType(length=100),
+        EmailType(length=127),
         nullable=True
     )
 
@@ -144,7 +143,22 @@ class Player(BaseModel):
             "is_white": self.is_white
         }
 
+class GameTimer(BaseModel):
+    """
+    Timer type for chess games!
+    types: COUNTUP (1), COUNTDOWN (2)
+    """
 
+    __tablename__ = "GameTimer"
+
+    timer_id = Column(
+        INTEGER(),
+        primary_key=True
+    )
+
+    timer_name = Column(
+        String(15)
+    )
 class Game(BaseModel):
     """
     Each chess game has one game. (lol)
@@ -158,7 +172,7 @@ class Game(BaseModel):
     )
 
     game = Column(
-        String(2048),
+        String(2047),
         nullable=True
     )
 
@@ -174,6 +188,15 @@ class Game(BaseModel):
 
     white_won = Column(
         BOOLEAN(),
+        nullable=True
+    )
+
+    timer = Column(
+        ForeignKey("GameTimer.timer_id")
+    )
+
+    timeLimit = Column(
+        INTEGER(),
         nullable=True
     )
 
@@ -207,7 +230,7 @@ class Session(Base):
     )
 
     session = Column(
-        String(256),
+        String(255),
         primary_key=False,
         nullable=False,
         unique=True,
