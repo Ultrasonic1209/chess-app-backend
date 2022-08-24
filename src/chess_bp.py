@@ -20,18 +20,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message
 
-from auth import has_session
-from auth import get_hostname
+from auth import has_session, get_hostname
 
 import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
 @chess_blueprint.post("/game")
-@has_session()
 @openapi.body(NewChessGameOptions)
 @openapi.response(status=201, content={"application/json": NewChessGameResponse})
 @validate(json=dataclass(NewChessGameOptions))
+@has_session()
 async def create_game(request: Request, body: NewChessGameOptions, user: models.User, session: models.Session):
     """
     Creates a chess game in the database, being logged in is optional
@@ -98,12 +97,12 @@ async def get_game(request: Request, gameid: int):
 
 
 @chess_blueprint.patch("/game/<gameid:int>/enter")
-@has_session()
 @openapi.body(ChessEntry)
 @openapi.response(status=204)
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
 @validate(json=dataclass(ChessEntry))
+@has_session()
 async def enter_game(request: Request, gameid: int, body: ChessEntry, user: models.User, session: models.Session):
     """
     If someone wants to enter a game, they need only use this endpoint.
