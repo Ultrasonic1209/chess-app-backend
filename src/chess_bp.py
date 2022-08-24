@@ -19,26 +19,25 @@ from sanic_ext import validate, openapi
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message
-from auth import authenticate_request
+
+from auth import has_session
 from login import get_hostname
+
 import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
-# TODO: add a decorator to ensure a session exists instead of copy pasting session code
-# maybe under `auth.py`?
-
 @chess_blueprint.post("/game")
+@has_session()
 @openapi.body(NewChessGameOptions)
 @openapi.response(status=201, content={"application/json": NewChessGameResponse})
 @validate(json=dataclass(NewChessGameOptions))
-async def create_game(request: Request, body: NewChessGameOptions):
+async def create_game(request: Request, body: NewChessGameOptions, user: models.User, session: models.Session):
     """
     Creates a chess game in the database, being logged in is optional
     TODO make creation options work
     """
     query_session: AsyncSession = request.ctx.session
-    user, session = await authenticate_request(request=request)
 
     async with query_session.begin():
 
@@ -99,28 +98,21 @@ async def get_game(request: Request, gameid: int):
 
 
 @chess_blueprint.patch("/game/<gameid:int>/enter")
+@has_session()
 @openapi.body(ChessEntry)
 @openapi.response(status=204)
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
 @validate(json=dataclass(ChessEntry))
-async def enter_game(request: Request, gameid: int, body: ChessEntry):
+async def enter_game(request: Request, gameid: int, body: ChessEntry, user: models.User, session: models.Session):
     """
     If someone wants to enter a game, they need only use this endpoint.
     """
     wants_white = body.wantsWhite or bool(random.getrandbits(1))
 
     query_session: AsyncSession = request.ctx.session
-    user, session = await authenticate_request(request=request)
 
     async with query_session.begin():
-
-        if session is None: # no session = no user either
-            session = models.Session()
-            session.session = secrets.token_hex(32)
-
-            async with query_session.begin_nested():
-                query_session.add(session)
 
         game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
 
@@ -151,7 +143,7 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
         query_session.add(player)
 
         if len(game.players) == 2:
-            # start the game!    
+            # start the game!
 
             time = datetime.datetime.now()
 
@@ -190,21 +182,6 @@ async def enter_game(request: Request, gameid: int, body: ChessEntry):
 
 
     response = empty()
-
-    if session.user is None: # userless session
-        payload = {
-            'user_id': None,
-            'session': session.session,
-            'expires': None
-        }
-
-        token = jwt.encode(payload, request.app.config.SECRET)
-
-        response.cookies[".CHECKMATESECRET"] = token
-        response.cookies[".CHECKMATESECRET"]["secure"] = True
-        response.cookies[".CHECKMATESECRET"]["samesite"] = "Lax"
-        response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
-        response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
 
     return response
 

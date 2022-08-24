@@ -167,7 +167,7 @@ async def do_login(request: Request, body: LoginBody):
 
         usersession = models.Session()
         usersession.session = usertoken
-    
+
         user.sessions.append(usersession)
 
     expires = (datetime.now() + timedelta(weeks=4)).timestamp() if body.rememberMe else None
