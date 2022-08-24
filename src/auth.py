@@ -29,7 +29,7 @@ def get_hostname(url, uri_type='netloc_only'):
         return parsed_uri.netloc
     return ''
 
-def check_token(request: sanic.Request) -> Optional[Token]:
+def check_token(request: Request) -> Optional[Token]:
     """
     Check a token.
     TODO figure out how it does that

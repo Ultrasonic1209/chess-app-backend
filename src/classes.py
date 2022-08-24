@@ -2,10 +2,13 @@
 Holds shared classes that don't fit into `models.py`
 """
 
+from types import SimpleNamespace
 from typing import List, Optional, TypedDict
 from sanic import Sanic
 from sanic import Request as SanicRequest
 from sanic_ext import Config
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 class AppConfig(Config):
     """
@@ -20,11 +23,18 @@ class App(Sanic):
     """
     config: AppConfig
 
+class Context(SimpleNamespace):
+    """
+    This is to allow typechecking of custom app context.
+    """
+    session: AsyncSession
+
 class Request(SanicRequest):
     """
     This is to allow typechecking of the custom App.
     """
     app: App
+    ctx: Context
 
 class User(TypedDict):
     """
