@@ -145,7 +145,7 @@ def has_session(create: bool = True):
 
                 return response
             else:
-                response = await func(request, *args, **kwargs, profile=user, session=session)
+                response = await func(request, *args, **kwargs, user=user, session=session)
                 return response
 
         return decorated_function
