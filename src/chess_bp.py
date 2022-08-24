@@ -213,7 +213,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
 
         chessgame = chess.pgn.read_game(StringIO(game.game))
 
-        chessgame.end().add_line(chess.Move.from_uci(params.san))
+        chessgame.end().add_line([chess.Move.from_uci(params.san)])
 
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
         pgn_string = chessgame.accept(exporter)
