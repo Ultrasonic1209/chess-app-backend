@@ -110,6 +110,7 @@ def has_session(create: bool = True):
     """
     Ensures all requests to anything wrapped with this decorator has a session, creating one if necessary.
     Passes a user as well
+    will set a cookie!
     """
     def decorator(func):
         @wraps(func)

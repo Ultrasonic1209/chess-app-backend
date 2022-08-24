@@ -19,7 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 
-from auth import is_logged_in, get_hostname
+from auth import is_logged_in, get_hostname, has_session
 from classes import Request, LoginBody, LoginResponse
 
 import models
@@ -77,11 +77,18 @@ async def verify_captcha(given_solution: str, fc_secret: str):
 @openapi.body(LoginBody)
 @openapi.response(status=200, content={"application/json": LoginResponse}, description="When a valid login attempt is made")
 @validate(json=dataclass(LoginBody))
-async def do_login(request: Request, body: LoginBody):
+@has_session()
+async def do_login(request: Request, body: LoginBody, user: models.User, session: models.Session):
     """
     Assigns JSON Web Token
     Captcha is provided by https://friendlycaptcha.com/
     """
+
+    if session.user:
+        return json({
+            "accept": False,
+            "userFacingMessage": "You are already logged in!"
+        })
 
     given_solution = body.frcCaptchaSolution
 
