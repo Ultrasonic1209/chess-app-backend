@@ -99,7 +99,7 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
 
     gamedict: PublicChessGameResponse = game.to_dict()
 
-    gamedict.in_game = in_game
+    gamedict["in_game"] = in_game
 
     return json(game.to_dict())
 
@@ -194,7 +194,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
 
 @chess_blueprint.patch("/game/<gameid:int>/move")
 @openapi.body(NewChessMove)
-@openapi.response(status=200, content={"application/json": PublicChessGame}, description="The updated chess game")
+@openapi.response(status=200, content={"application/json": PublicChessGameResponse}, description="The updated chess game")
 @openapi.response(status=400, content={"application/json": Message})
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
@@ -236,6 +236,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             return json({"message": "invalid move"}, status=400)
 
         game.game = pgn_string
+
+    gamedict: PublicChessGameResponse = game.to_dict()
+    gamedict["in_game"] = True
 
     return json(game.to_dict())
 
