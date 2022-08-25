@@ -27,15 +27,15 @@ import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
-def user_is_in_game(game: models.Game, session: models.Session, user: models.User):
+def get_player_team(game: models.Game, session: models.Session, user: models.User):
     """
     Checks if a user is already in a game.
     """
 
     for player in game.players:
         if ((session is not None) and (session == player.session)) or ((user is not None) and (user == player.user)):
-            return True
-    return False
+            return player.is_white
+    return None
 
 @chess_blueprint.post("/game")
 @openapi.body(NewChessGameOptions)
@@ -99,12 +99,12 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
         if game is None:
             return json({"message": "game does not exist"}, status=404)
 
-        in_game = user_is_in_game(game=game, session=session, user=user)
+        is_white = get_player_team(game=game, session=session, user=user)
 
 
     gamedict: PublicChessGameResponse = game.to_dict()
 
-    gamedict["in_game"] = in_game
+    gamedict["is_white"] = is_white
 
     return json(gamedict)
 
@@ -132,7 +132,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
             return json({"message": "game does not exist"}, status=404)
 
 
-        if user_is_in_game(game=game, session=session, user=user):
+        if get_player_team(game=game, session=session, user=user) is not None:
             return json({"message": "you are already in this game"}, status=401)
 
         if len(game.players) >= 2:
@@ -221,7 +221,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         if game.time_started is None:
             return json({"message": "game has not started"}, status=400)
 
-        if not user_is_in_game(game=game, session=session, user=user):
+        if get_player_team(game=game, session=session, user=user) is None:
             return json({"message": "you are not playing this game"}, status=401)
 
         chessgame = chess.pgn.read_game(StringIO(game.game))

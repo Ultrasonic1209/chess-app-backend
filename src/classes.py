@@ -104,7 +104,7 @@ class PublicChessGameResponse(TypedDict):
     PublicChessGame but it has more localised response
     """
 
-    in_game: bool
+    is_white: Optional[bool]
 
 class NewChessGameResponse:
     """
