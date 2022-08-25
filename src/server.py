@@ -42,6 +42,7 @@ app.extend(config=AppConfig(
     cors_allow_headers=["content-type"],
     cors_always_send=True,
     cors_max_age=48,
+    CORS_METHODS=["GET", "POST", "PATCH", "DELETE"]
 ))
 
 app.ext.openapi.describe(
