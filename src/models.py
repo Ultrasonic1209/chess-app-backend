@@ -220,6 +220,8 @@ class Game(BaseModel):
             "time_ended": self.time_ended.isoformat() if self.time_ended else None,
             "white_won": self.white_won,
             "players": [{"userId": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players],
+            "timer": self.timer.timer_name,
+            "time_limit": self.timeLimit,
             "game": self.game
         }
 

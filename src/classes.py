@@ -96,7 +96,7 @@ class PublicChessGame(TypedDict):
     white_won: Optional[bool]
     players: List[PublicChessPlayer]
     timer: str
-    timeLimit: Optional[int]
+    time_limit: Optional[int]
     game: Optional[str]
 
 class NewChessGameResponse:
