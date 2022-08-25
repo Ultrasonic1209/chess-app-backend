@@ -191,7 +191,7 @@ class Game(BaseModel):
         nullable=True
     )
 
-    timer = Column(
+    timer_id = Column(
         ForeignKey("GameTimer.timer_id"),
         nullable=False
     )
@@ -200,6 +200,12 @@ class Game(BaseModel):
         INTEGER(),
         nullable=True
     )
+
+    timer: GameTimer = relationship(
+        "GameTimer",
+        use_list=False,
+        lazy=_LAZYMETHOD
+        )
 
     players: List[Player] = relationship(
         "Player",

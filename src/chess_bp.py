@@ -61,7 +61,7 @@ async def create_game(request: Request, options: NewChessGameOptions, user: mode
         player.session = session if user is None else None
 
         game = models.Game()
-        game.timer = game_timer.timer_id
+        game.timer = game_timer.timer
         game.timeLimit = options.timeLimit
 
         game.players.append(player)
