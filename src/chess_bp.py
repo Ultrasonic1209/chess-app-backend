@@ -28,8 +28,12 @@ import models
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
 def user_is_in_game(game: models.Game, session: models.Session, user: models.User):
+    """
+    Checks if a user is already in a game.
+    """
+
     for player in game.players:
-        if ((session is not None) and (session == player.session)) and ((user is not None) and (user == player.user)):
+        if ((session is not None) and (session == player.session)) or ((user is not None) and (user == player.user)):
             return True
     return False
 
