@@ -99,6 +99,13 @@ class PublicChessGame(TypedDict):
     time_limit: Optional[int]
     game: Optional[str]
 
+class PublicChessGameResponse:
+    """
+    PublicChessGame but it has more localised response
+    """
+
+    in_game: bool
+
 class NewChessGameResponse:
     """
     What you get when you create a game

@@ -19,7 +19,7 @@ from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from classes import PublicChessGame, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove
+from classes import PublicChessGameResponse, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove
 
 from auth import has_session
 
@@ -74,8 +74,9 @@ async def create_game(request: Request, options: NewChessGameOptions, user: mode
 
 @chess_blueprint.get("/game/<gameid:int>")
 @openapi.response(status=404, content={"application/json": Message})
-@openapi.response(status=200, content={"application/json": PublicChessGame})
-async def get_game(request: Request, gameid: int):
+@openapi.response(status=200, content={"application/json": PublicChessGameResponse})
+@has_session()
+async def get_game(request: Request, gameid: int, user: models.User, session: models.Session):
     """
     Retrieves game status
     """
@@ -87,6 +88,18 @@ async def get_game(request: Request, gameid: int):
 
         if game is None:
             return json({"message": "game does not exist"}, status=404)
+
+        in_game = False
+
+        for player in game.players:
+            if (player.session == session) or (player.user == user):
+                in_game = True
+                break
+
+
+    gamedict: PublicChessGameResponse = game.to_dict()
+
+    gamedict.in_game = in_game
 
     return json(game.to_dict())
 
