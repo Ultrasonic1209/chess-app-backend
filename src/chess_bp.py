@@ -27,6 +27,12 @@ import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
+def user_is_in_game(game: models.Game, session: models.Session, user: models.User):
+    for player in game.players:
+        if ((session is not None) and (session == player.session)) and ((user is not None) and (user == player.user)):
+            return True
+    return False
+
 @chess_blueprint.post("/game")
 @openapi.body(NewChessGameOptions)
 @openapi.response(status=201, content={"application/json": NewChessGameResponse})
@@ -89,12 +95,7 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
         if game is None:
             return json({"message": "game does not exist"}, status=404)
 
-        in_game = False
-
-        for player in game.players:
-            if (player.session == session) or (player.user == user):
-                in_game = True
-                break
+        in_game = user_is_in_game(game=game, session=session, user=user)
 
 
     gamedict: PublicChessGameResponse = game.to_dict()
@@ -126,9 +127,9 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
         if game is None:
             return json({"message": "game does not exist"}, status=404)
 
-        for player in game.players:
-            if (player.user == user) or (player.session == session):
-                return json({"message": "you are already in this game"}, status=401)
+
+        if user_is_in_game(game=game, session=session, user=user):
+            return json({"message": "you are already in this game"}, status=401)
 
         if len(game.players) >= 2:
             return json({"message": "game cannot be joined"}, status=401)
@@ -216,12 +217,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         if game.time_started is None:
             return json({"message": "game has not started"}, status=400)
 
-        user_player = None
-        for player in game.players:
-            if (player.user == user) or (player.session == session):
-                user_player = player
-
-        if user_player is None:
+        if not user_is_in_game(game=game, session=session, user=user):
             return json({"message": "you are not playing this game"}, status=401)
 
         chessgame = chess.pgn.read_game(StringIO(game.game))
