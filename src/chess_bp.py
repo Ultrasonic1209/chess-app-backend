@@ -199,7 +199,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
 @openapi.response(status=400, content={"application/json": Message})
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
-@validate(json=dataclass(NewChessMove), body_argument="pagamedictrams")
+@validate(json=dataclass(NewChessMove), body_argument="params")
 @has_session(create=False)
 async def make_move(request: Request, gameid: int, params: NewChessMove, user: models.User, session: models.Session):
     """
