@@ -203,7 +203,7 @@ class Game(BaseModel):
 
     timer: GameTimer = relationship(
         "GameTimer",
-        use_list=False,
+        uselist=False,
         lazy=_LAZYMETHOD
         )
 
