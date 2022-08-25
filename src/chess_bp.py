@@ -50,7 +50,7 @@ async def create_game(request: Request, options: NewChessGameOptions, user: mode
     query_session: AsyncSession = request.ctx.session
 
     gtstmt = select(models.GameTimer).where(
-        models.GameTimer.timer_name == "Countdown" if options.countingDown else "Countup"
+        models.GameTimer.timer_name == ("Countdown" if options.countingDown else "Countup")
     )
 
     async with query_session.begin():
