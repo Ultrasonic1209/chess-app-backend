@@ -109,7 +109,7 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
     return json(gamedict)
 
 
-@chess_blueprint.put("/game/<gameid:int>/enter")
+@chess_blueprint.patch("/game/<gameid:int>/enter")
 @openapi.body(ChessEntry)
 @openapi.response(status=204)
 @openapi.response(status=401, content={"application/json": Message})
