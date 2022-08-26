@@ -11,7 +11,7 @@ import chess
 import chess.pgn
 
 from sanic import Blueprint
-from sanic.response import text, json, empty
+from sanic.response import json, empty
 #from sanic.log import logger
 from sanic_ext import validate, openapi
 
@@ -157,7 +157,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
         if len(game.players) == 2:
             # start the game!
 
-            time = datetime.datetime.now()
+            time = datetime.datetime.now(datetime.timezone.utc)
 
             white: models.Player
             black: models.Player
@@ -244,7 +244,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             return json({"message": "not done yet"}, status=501)
         else:
             chessgame.end().add_line([move])
-            chessgame.end().set_clock((datetime.datetime.now() - game.time_started).total_seconds())
+            chessgame.end().set_clock((datetime.datetime.now(datetime.timezone.utc) - game.time_started).total_seconds())
 
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
 
