@@ -146,7 +146,7 @@ class Player(BaseModel):
 class GameTimer(BaseModel):
     """
     Timer type for chess games!
-    types: COUNTUP (1), COUNTDOWN (2)
+    types: Countup (1), Countdown (2)
     """
 
     __tablename__ = "GameTimer"
