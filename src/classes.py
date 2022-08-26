@@ -99,7 +99,7 @@ class PublicChessGame(TypedDict):
     time_limit: Optional[int]
     game: Optional[str]
 
-class PublicChessGameResponse(TypedDict):
+class PublicChessGameResponse(PublicChessGame):
     """
     PublicChessGame but it has more localised response
     """
