@@ -244,6 +244,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             return json({"message": "not done yet"}, status=501)
         else:
             chessgame.end().add_line([move])
+            chessgame.end().set_clock((datetime.datetime.now() - game.time_started).total_seconds())
 
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
 

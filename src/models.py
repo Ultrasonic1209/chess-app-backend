@@ -1,6 +1,7 @@
 """
 Represents the database as a bunch of Python objects.
 """
+from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import BOOLEAN, INTEGER, TIMESTAMP, Column, ForeignKey, String
 from sqlalchemy.orm import declarative_base, relationship
@@ -176,12 +177,12 @@ class Game(BaseModel):
         nullable=True
     )
 
-    time_started = Column(
+    time_started: Optional[datetime] = Column(
         TIMESTAMP(),
         nullable=True
     )
 
-    time_ended = Column(
+    time_ended: Optional[datetime] = Column(
         TIMESTAMP(),
         nullable=True
     )
