@@ -158,7 +158,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
         if len(game.players) == 2:
             # start the game!
 
-            time = arrow.utcnow()
+            time = arrow.now()
 
             white: models.Player
             black: models.Player
@@ -241,7 +241,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         except ValueError:
             return json({"message": "invalid move"}, status=400)
 
-        seconds_since_start = (arrow.utcnow() - game.time_started).total_seconds()
+        seconds_since_start = (arrow.now() - game.time_started).total_seconds()
 
         if game.timer.timer_name == "Countdown":
 
