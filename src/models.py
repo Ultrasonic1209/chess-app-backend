@@ -3,7 +3,7 @@ Represents the database as a bunch of Python objects.
 """
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import BOOLEAN, INTEGER, DATETIME, Column, ForeignKey, String
+from sqlalchemy import BOOLEAN, INTEGER, DATETIME, Column, ForeignKey, String, func
 from sqlalchemy.orm import declarative_base, relationship
 
 from sqlalchemy import MetaData
@@ -65,7 +65,8 @@ class User(BaseModel):
 
     time_created = Column(
         DATETIME(timezone=True),
-        nullable=False
+        nullable=False,
+        server_default=func.now()
     )
 
     players = relationship(
