@@ -243,30 +243,30 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         secondsSinceStart = (datetime.datetime.now(datetime.timezone.utc) - game.time_started).total_seconds()
 
         if game.timer.timer_name == "Countdown":
-            
+
             times = []
             for node in chessgame.mainline():
                 times.append(node.clock() - game.timeLimit)
 
-            isWhite = True
+            is_white = True
             white = 0
             black = 0
 
-            lastTime = game.timeLimit
+            last_time = game.timeLimit
 
             for time in times:
-                if isWhite:
-                    white += lastTime - time
-                elif not isWhite:
-                    black += lastTime - time
-                lastTime = time
-                isWhite = not isWhite
+                if is_white:
+                    white += last_time - time
+                elif not is_white:
+                    black += last_time - time
+                last_time = time
+                is_white = not is_white
 
                 white = game.timeLimit - white
                 black = game.timeLimit - black
 
-                logger.warn(white)
-                logger.warn(black)
+                logger.warning(white)
+                logger.warning(black)
 
                 if white <= 0:
                     white = game.timeLimit
