@@ -264,16 +264,16 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
                 last_time = time
                 is_white = not is_white
 
-                white = game.timeLimit - white
-                black = game.timeLimit - black
+            white = game.timeLimit - white
+            black = game.timeLimit - black
 
-                logger.warning(white)
-                logger.warning(black)
+            logger.warning(white)
+            logger.warning(black)
 
-                if white <= 0:
-                    white = game.timeLimit
-                if black <= 0:
-                    black = game.timeLimit
+            if white <= 0:
+                white = game.timeLimit
+            if black <= 0:
+                black = game.timeLimit
 
             return json({"message": "not done yet"}, status=501)
         else:
