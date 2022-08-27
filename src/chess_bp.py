@@ -12,7 +12,7 @@ import chess.pgn
 
 from sanic import Blueprint
 from sanic.response import json, empty
-#from sanic.log import logger
+from sanic.log import logger
 from sanic_ext import validate, openapi
 
 from sqlalchemy.engine import Result
@@ -240,11 +240,43 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         except ValueError:
             return json({"message": "invalid move"}, status=400)
 
+        secondsSinceStart = (datetime.datetime.now(datetime.timezone.utc) - game.time_started).total_seconds()
+
         if game.timer.timer_name == "Countdown":
+            
+            times = []
+            for node in chessgame.mainline():
+                times.append(node.clock() - game.timeLimit)
+
+            isWhite = True
+            white = 0
+            black = 0
+
+            lastTime = game.timeLimit
+
+            for time in times:
+                if isWhite:
+                    white += lastTime - time
+                elif not isWhite:
+                    black += lastTime - time
+                lastTime = time
+                isWhite = not isWhite
+
+                white = game.timeLimit - white
+                black = game.timeLimit - black
+
+                logger.warn(white)
+                logger.warn(black)
+
+                if white <= 0:
+                    white = game.timeLimit
+                if black <= 0:
+                    black = game.timeLimit
+
             return json({"message": "not done yet"}, status=501)
         else:
             chessgame.end().add_line([move])
-            chessgame.end().set_clock((datetime.datetime.now(datetime.timezone.utc) - game.time_started).total_seconds())
+            chessgame.end().set_clock(secondsSinceStart)
 
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
 

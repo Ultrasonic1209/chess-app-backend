@@ -197,7 +197,7 @@ class Game(BaseModel):
         nullable=False
     )
 
-    timeLimit = Column(
+    timeLimit: int = Column(
         INTEGER(),
         nullable=True
     )
