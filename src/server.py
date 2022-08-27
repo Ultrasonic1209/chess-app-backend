@@ -72,7 +72,7 @@ sqlpass = os.getenv("SQL_PASSWORD", "")
 
 bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
-    echo=True,
+    echo=False,
     pool_pre_ping=True,
 )
 
