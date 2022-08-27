@@ -270,9 +270,8 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             logger.warning(white)
             logger.warning(black)
 
-            if white <= 0:
+            if len(times) == 0:
                 white = game.timeLimit
-            if black <= 0:
                 black = game.timeLimit
 
             return json({"message": "not done yet"}, status=501)
