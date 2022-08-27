@@ -63,7 +63,7 @@ class User(BaseModel):
         nullable=True
     )
 
-    time_created = Column(
+    time_created: datetime = Column(
         DATETIME(timezone=True),
         nullable=False,
         server_default=func.now()
