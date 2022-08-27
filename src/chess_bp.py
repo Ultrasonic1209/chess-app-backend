@@ -2,7 +2,6 @@
 Will handle everything related to chess games.
 """
 from dataclasses import dataclass
-import datetime
 from io import StringIO
 import random
 from typing import Optional
@@ -14,6 +13,8 @@ from sanic import Blueprint
 from sanic.response import json, empty
 from sanic.log import logger
 from sanic_ext import validate, openapi
+
+import arrow
 
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -157,7 +158,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
         if len(game.players) == 2:
             # start the game!
 
-            time = datetime.datetime.now(datetime.timezone.utc)
+            time = arrow.utcnow()
 
             white: models.Player
             black: models.Player
@@ -240,7 +241,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         except ValueError:
             return json({"message": "invalid move"}, status=400)
 
-        secondsSinceStart = (datetime.datetime.now(datetime.timezone.utc) - game.time_started).total_seconds()
+        seconds_since_start = (arrow.utcnow() - game.time_started).total_seconds()
 
         if game.timer.timer_name == "Countdown":
 
@@ -255,6 +256,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             last_time = game.timeLimit
 
             for time in times:
+
                 if is_white:
                     white += last_time - time
                 elif not is_white:
@@ -276,7 +278,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             return json({"message": "not done yet"}, status=501)
         else:
             chessgame.end().add_line([move])
-            chessgame.end().set_clock(secondsSinceStart)
+            chessgame.end().set_clock(seconds_since_start)
 
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
 

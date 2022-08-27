@@ -8,3 +8,4 @@ asyncmy
 sqlalchemy
 sqlalchemy_utils
 passlib
+arrow

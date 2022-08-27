@@ -1,14 +1,15 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import BOOLEAN, INTEGER, DATETIME, Column, ForeignKey, String, func
-from sqlalchemy.orm import declarative_base, relationship
 
+import arrow
+
+from sqlalchemy import BOOLEAN, INTEGER, Column, ForeignKey, String, func
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import MetaData
 
-from sqlalchemy_utils import PasswordType, EmailType, force_auto_coercion
+from sqlalchemy_utils import PasswordType, EmailType, ArrowType, force_auto_coercion
 
 import classes
 
@@ -63,8 +64,8 @@ class User(BaseModel):
         nullable=True
     )
 
-    time_created: datetime = Column(
-        DATETIME(timezone=True),
+    time_created: arrow.Arrow = Column(
+        ArrowType,
         nullable=False,
         server_default=func.now()
     )
@@ -178,13 +179,13 @@ class Game(BaseModel):
         nullable=True
     )
 
-    time_started: Optional[datetime] = Column(
-        DATETIME(timezone=True),
+    time_started: Optional[arrow.Arrow] = Column(
+        ArrowType,
         nullable=True
     )
 
-    time_ended: Optional[datetime] = Column(
-        DATETIME(timezone=True),
+    time_ended: Optional[arrow.Arrow] = Column(
+        ArrowType,
         nullable=True
     )
 
