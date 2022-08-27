@@ -11,7 +11,7 @@ import chess.pgn
 
 from sanic import Blueprint
 from sanic.response import json, empty
-from sanic.log import logger
+#from sanic.log import logger
 from sanic_ext import validate, openapi
 
 import arrow
