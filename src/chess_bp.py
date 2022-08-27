@@ -284,7 +284,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
                 return json({"message": "black ran out of time"})
 
             chessgame.end().add_line([move])
-            chessgame.end().set_clock(game.timeLimit - seconds_since_start)
+            chessgame.end().set_clock((game.timeLimit * 2) - seconds_since_start)
 
             #return json({"message": f"white has {white} seconds remaining\nblack has {black} seconds remaining"}, status=501)
         else:
