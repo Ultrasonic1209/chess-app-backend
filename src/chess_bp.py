@@ -269,9 +269,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             white = game.timeLimit - white
             black = game.timeLimit - black
 
-            if len(times) == 0:
-                white = game.timeLimit
-                black = game.timeLimit
+            #if len(times) == 0:
+            #    white = game.timeLimit
+            #    black = game.timeLimit
 
             if chessgame.turn() == chess.WHITE:
                 white -= seconds_since_start - time_moving
@@ -281,7 +281,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             logger.warning(white)
             logger.warning(black)
 
-            return json({"message": "not done yet"}, status=501)
+            return json({"message": f"white has {white} seconds remaining\nblack has {black} seconds remaining"}, status=501)
         else:
             chessgame.end().add_line([move])
             chessgame.end().set_clock(seconds_since_start)
