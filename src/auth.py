@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import User, Session
+from models import Session
 from classes import Request, Token
 
 def get_hostname(url, uri_type='netloc_only'):
