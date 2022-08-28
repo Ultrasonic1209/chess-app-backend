@@ -45,7 +45,7 @@ def check_token(request: Request) -> Optional[Token]:
             key=request.app.config.SECRET,
             algorithms=["HS256"]
         )
-    except jwt.exceptions.InvalidTokenError:
+    except (jwt.exceptions.InvalidTokenError):
         return None
 
 async def authenticate_request(request: Request):
@@ -53,10 +53,10 @@ async def authenticate_request(request: Request):
     Retrieves a session and corresponding user from a request.
     TODO: move expiration to the server
     """
-    token: Optional[Token] = check_token(request)
+    token = check_token(request)
 
     if token:
-        if expiretimestamp := token["expires"]:
+        if expiretimestamp := token.get("expires"):
             expiretime = datetime.fromtimestamp(expiretimestamp)
 
             if expiretime <= datetime.now():
@@ -65,7 +65,7 @@ async def authenticate_request(request: Request):
         session: AsyncSession = request.ctx.session
 
         stmt = select(Session).where(
-            Session.session == token["session"]
+            Session.session == token.get("session")
         ).with_hint(Session, "USE INDEX (ix_Session_session)")
 
         async with session.begin():
@@ -78,7 +78,7 @@ async def authenticate_request(request: Request):
 
             user_session: Session = user_session_row["Session"]
 
-            user: Optional[User] = user_session.user
+            user = user_session.user
 
         return user, user_session
     else:
