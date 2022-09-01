@@ -50,6 +50,9 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
     """
     Lets users get a list of online games
     """
+
+    #return json(request.query_args)
+
     return json({
         "myGames": options.myGames,
         "iveWon": options.iveWon,
