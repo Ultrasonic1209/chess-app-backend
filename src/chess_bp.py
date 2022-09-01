@@ -44,7 +44,7 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
 @openapi.parameter("imWhite", bool, required=True)
 @openapi.parameter("perPage", int, required=True)
 @openapi.parameter("page", required=True)
-@validate(query=dataclass(NewChessGameOptions), query_argument="options")
+@validate(query=dataclass(GetGameOptions), query_argument="options")
 @has_session()
 async def get_games(request: Request, options: GetGameOptions, user: models.User, session: models.Session):
     """
