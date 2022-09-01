@@ -82,6 +82,7 @@ class PublicChessPlayer(TypedDict):
     what everyone gets to know about any chess player
     """
 
+    username: Optional[str]
     userId: Optional[int]
     isWhite: bool
 
