@@ -20,7 +20,7 @@ from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from classes import PublicChessGameResponse, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove
+from classes import PublicChessGameResponse, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove, GetGameOptions
 
 from auth import has_session
 
@@ -37,6 +37,17 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
         if ((session is not None) and (session == player.session)) or ((user is not None) and (user == player.user)):
             return player.is_white
     return None
+
+@chess_blueprint.get("/get-games")
+@openapi.parameter("myGames", bool)
+@openapi.parameter("iveWon", bool)
+@openapi.parameter("imWhite", bool)
+@openapi.parameter("perPage", int)
+@openapi.parameter("page")
+@has_session()
+async def get_games(request: Request, options: GetGameOptions, user: models.User, session: models.Session):
+    return json(options)
+
 
 @chess_blueprint.post("/game")
 @openapi.body(NewChessGameOptions)

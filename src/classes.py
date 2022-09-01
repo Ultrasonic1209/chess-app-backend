@@ -135,3 +135,13 @@ class NewChessMove:
     """
 
     san: str
+
+class GetGameOptions:
+    """
+    So people can find out what online games they can view
+    """
+    myGames: bool
+    iveWon: bool
+    imWhite: bool
+    perPage: int
+    page: int
