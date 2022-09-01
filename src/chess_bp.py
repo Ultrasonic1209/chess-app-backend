@@ -39,11 +39,11 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
     return None
 
 @chess_blueprint.get("/get-games")
-@openapi.parameter("myGames", bool)
-@openapi.parameter("iveWon", bool)
-@openapi.parameter("imWhite", bool)
-@openapi.parameter("perPage", int)
-@openapi.parameter("page")
+@openapi.parameter("myGames", bool, required=True)
+@openapi.parameter("iveWon", bool, required=True)
+@openapi.parameter("imWhite", bool, required=True)
+@openapi.parameter("perPage", int, required=True)
+@openapi.parameter("page", required=True)
 @validate(query=dataclass(NewChessGameOptions), query_argument="options")
 @has_session()
 async def get_games(request: Request, options: GetGameOptions, user: models.User, session: models.Session):
