@@ -50,7 +50,13 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
     """
     Lets users get a list of online games
     """
-    return json(options)
+    return json({
+        "myGames": options.myGames,
+        "iveWon": options.iveWon,
+        "imWhite": options.imWhite,
+        "perPage": options.perPage,
+        "page": options.page
+    })
 
 
 @chess_blueprint.post("/game")
