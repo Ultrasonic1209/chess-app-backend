@@ -1,7 +1,6 @@
 """
 Will handle everything related to chess games.
 """
-from dataclasses import dataclass
 from io import StringIO
 import random
 from typing import Optional
@@ -44,7 +43,7 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
 @openapi.parameter("imWhite", bool, required=True)
 @openapi.parameter("perPage", int, required=True)
 @openapi.parameter("page", int, required=True)
-@validate(query=dataclass(GetGameOptions), query_argument="options")
+@validate(query=GetGameOptions, query_argument="options")
 @has_session()
 async def get_games(request: Request, options: GetGameOptions, user: models.User, session: models.Session):
     """
@@ -65,7 +64,7 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
 @chess_blueprint.post("/game")
 @openapi.body(NewChessGameOptions)
 @openapi.response(status=201, content={"application/json": NewChessGameResponse})
-@validate(json=dataclass(NewChessGameOptions), body_argument="options")
+@validate(json=NewChessGameOptions, body_argument="options")
 @has_session()
 async def create_game(request: Request, options: NewChessGameOptions, user: models.User, session: models.Session):
     """
@@ -139,7 +138,7 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
 @openapi.response(status=204)
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
-@validate(json=dataclass(ChessEntry), body_argument="params")
+@validate(json=ChessEntry, body_argument="params")
 @has_session()
 async def enter_game(request: Request, gameid: int, params: ChessEntry, user: models.User, session: models.Session):
     """
@@ -228,7 +227,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
 @openapi.response(status=400, content={"application/json": Message})
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
-@validate(json=dataclass(NewChessMove), body_argument="params")
+@validate(json=NewChessMove, body_argument="params")
 @has_session(create=False)
 async def make_move(request: Request, gameid: int, params: NewChessMove, user: models.User, session: models.Session):
     """

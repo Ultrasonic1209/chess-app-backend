@@ -2,6 +2,7 @@
 Holds shared classes that don't fit into `models.py`
 """
 
+from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import List, Optional, TypedDict
 from sanic import Sanic
@@ -67,6 +68,7 @@ class LoginResponse:
     userFacingMessage: str
     profile: Optional[User]
 
+@dataclass
 class LoginBody:
     """
     Validates /login for frcCaptchaSolution in a JSON dict.
@@ -114,6 +116,7 @@ class NewChessGameResponse:
 
     gameid: int
 
+@dataclass
 class NewChessGameOptions:
     """
     Options that can be given for how the game should be created
@@ -123,6 +126,7 @@ class NewChessGameOptions:
     countingDown: bool
     timeLimit: Optional[int]
 
+@dataclass
 class ChessEntry:
     """
     Options that can be given for how you wish to enter a chess game
@@ -130,6 +134,7 @@ class ChessEntry:
 
     wantsWhite: Optional[bool]
 
+@dataclass
 class NewChessMove:
     """
     So people can make moves on chess games!
@@ -137,12 +142,13 @@ class NewChessMove:
 
     san: str
 
+@dataclass
 class GetGameOptions:
     """
     So people can find out what online games they can view
     """
-    myGames: bool
-    iveWon: bool
-    imWhite: bool
-    perPage: int
+    my_games: bool
+    ive_won: bool
+    im_white: bool
+    per_page: int
     page: int

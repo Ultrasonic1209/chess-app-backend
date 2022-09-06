@@ -4,7 +4,6 @@ Captcha process influenced by
 https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pages/api/submitBasic.js
 """
 
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 import secrets
 
@@ -76,7 +75,7 @@ async def verify_captcha(given_solution: str, fc_secret: str):
 @login.post("/")
 @openapi.body(LoginBody)
 @openapi.response(status=200, content={"application/json": LoginResponse}, description="When a valid login attempt is made")
-@validate(json=dataclass(LoginBody), body_argument="params")
+@validate(json=LoginBody, body_argument="params")
 @has_session()
 async def do_login(request: Request, params: LoginBody, user: models.User, session: models.Session):
     """
