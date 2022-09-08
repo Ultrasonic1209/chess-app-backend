@@ -212,7 +212,7 @@ async def do_logout(request: Request, user: models.User, session: models.Session
 
     return response
 
-@login.get("/identify")
+@login.get("/identify.json")
 @is_logged_in(silent=True)
 async def identify(request: Request, user: models.User, session: models.Session):
     """
