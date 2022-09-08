@@ -106,7 +106,7 @@ async def create_game(request: Request, options: NewChessGameOptions, user: mode
 
     return response
 
-@chess_blueprint.get("/game/<gameid:int>.json")
+@chess_blueprint.get("/game/<gameid:int>")
 @openapi.response(status=404, content={"application/json": Message})
 @openapi.response(status=200, content={"application/json": PublicChessGameResponse})
 @has_session()
