@@ -38,7 +38,7 @@ app.extend(config=AppConfig(
     oas_ui_default="swagger",
     swagger_ui_configuration={"apisSorter": "alpha", "operationsSorter": "alpha", "docExpansion": "list"},
 
-    cors_origins=re.compile(r"^(.*)ultras-playroom\.xyz"),
+    cors_origins=re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)"),
     cors_supports_credentials=True,
     cors_allow_headers=["content-type"],
     cors_always_send=True,
