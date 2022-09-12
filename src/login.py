@@ -178,10 +178,14 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
         }
     )
 
-    # cookie is set by decorator has_session()
+    token = jwt.encode(payload, request.app.config.SECRET)
+
+    response.cookies[".CHECKMATESECRET"] = token
 
     if params.rememberMe:
         response.cookies[".CHECKMATESECRET"]["expires"] = datetime.fromtimestamp(expires)
+
+    # the rest of the cookie params are set by the has_session() decorator
 
     return response
 
