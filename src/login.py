@@ -189,7 +189,7 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
     response.cookies[".CHECKMATESECRET"]["secure"] = True
     response.cookies[".CHECKMATESECRET"]["samesite"] = "None"
     #response.cookies[".CHECKMATESECRET"]["domain"] = "." + get_hostname(request.headers.get("origin", ""))
-    response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
+    response.cookies[".CHECKMATESECRET"]["comment"] = "aeiou"
 
     if params.rememberMe:
         response.cookies[".CHECKMATESECRET"]["expires"] = datetime.fromtimestamp(expires)
