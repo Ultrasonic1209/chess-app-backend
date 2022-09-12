@@ -123,7 +123,7 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
                 "userFacingMessage": user_facing_message
             })
 
-    session: AsyncSession = request.ctx.session
+    query_session: AsyncSession = request.ctx.session
 
     username = params.username
     password = params.password
@@ -132,8 +132,8 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
         models.User.username == username
     )
 
-    async with session.begin():
-        resp: Result = await session.execute(stmt)
+    async with query_session.begin():
+        resp: Result = await query_session.execute(stmt)
 
         row = resp.first()
 
@@ -159,18 +159,13 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
 
         # user is authenticated
 
-        usertoken = secrets.token_hex(32)
-
-        usersession = models.Session()
-        usersession.session = usertoken
-
-        user.sessions.append(usersession)
+        user.sessions.append(session)
 
     expires = (datetime.now() + timedelta(weeks=4)).timestamp() if params.rememberMe else None
 
     payload = {
         'user_id': user.user_id,
-        'session': usertoken,
+        'session': session.session,
         'expires': expires
     }
 
@@ -183,13 +178,7 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
         }
     )
 
-    token = jwt.encode(payload, request.app.config.SECRET)
-
-    response.cookies[".CHECKMATESECRET"] = token
-    response.cookies[".CHECKMATESECRET"]["secure"] = True
-    response.cookies[".CHECKMATESECRET"]["samesite"] = "None"
-    #response.cookies[".CHECKMATESECRET"]["domain"] = "." + get_hostname(request.headers.get("origin", ""))
-    response.cookies[".CHECKMATESECRET"]["comment"] = "aeiou"
+    # cookie is set by decorator has_session()
 
     if params.rememberMe:
         response.cookies[".CHECKMATESECRET"]["expires"] = datetime.fromtimestamp(expires)

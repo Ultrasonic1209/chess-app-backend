@@ -140,9 +140,9 @@ def has_session(create: bool = True):
 
                 response.cookies[".CHECKMATESECRET"] = token
                 response.cookies[".CHECKMATESECRET"]["secure"] = True
-                response.cookies[".CHECKMATESECRET"]["samesite"] = "Lax"
-                response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
-                response.cookies[".CHECKMATESECRET"]["comment"] = "I'm in so much pain"
+                response.cookies[".CHECKMATESECRET"]["samesite"] = "None"
+                #response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
+                response.cookies[".CHECKMATESECRET"]["comment"] = "aaaaaaa"
 
                 return response
             else:
