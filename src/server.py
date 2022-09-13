@@ -38,7 +38,11 @@ app.extend(config=AppConfig(
     oas_ui_default="swagger",
     swagger_ui_configuration={"apisSorter": "alpha", "operationsSorter": "alpha", "docExpansion": "list"},
 
-    cors_origins="https://tauri.localhost,https://dev.chessapp.ultras-playroom.xyz,https://chessapp.ultras-playroom.xyz", # re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)")
+    cors_origins=[
+        re.compile(r"^https://(.*)ultras-playroom\.xyz"), # main domain
+        re.compile(r"https://chess-app-frontend-?(.*)-ultrasonic1209\.vercel\.app"), # vercel previews
+        re.compile(r"https://tauri\.localhost") # tauri demo
+    ], # re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)")
     cors_supports_credentials=True,
     cors_allow_headers=["content-type"],
     cors_always_send=True,
