@@ -4,6 +4,7 @@ Will handle everything related to chess games.
 from io import StringIO
 import random
 from typing import Optional
+from distutils.util import strtobool
 
 import chess
 import chess.pgn
@@ -17,7 +18,8 @@ import arrow
 
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
+from sqlalchemy.sql.expression import Select
 
 from classes import PublicChessGameResponse, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove, GetGameOptions
 
@@ -38,10 +40,8 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
     return None
 
 @chess_blueprint.get("/get-games")
-@openapi.parameter("myGames", bool, required=True)
-@openapi.parameter("iveWon", bool, required=True)
-@openapi.parameter("imWhite", bool, required=True)
-@openapi.parameter("perPage", int, required=True)
+@openapi.parameter("my_games", bool, required=True)
+@openapi.parameter("page_size", int, required=True)
 @openapi.parameter("page", int, required=True)
 @validate(query=GetGameOptions, query_argument="options")
 @has_session()
@@ -50,15 +50,48 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
     Lets users get a list of online games
     """
 
-    #return json(request.query_args)
+    options = {item: value for (item, value) in request.query_args}
 
-    return json({
-        "myGames": options.myGames,
-        "iveWon": options.iveWon,
-        "imWhite": options.imWhite,
-        "perPage": options.perPage,
-        "page": options.page
-    })
+    stmt: Select = select(models.Game)
+
+    stmt = stmt.limit(int(options["page_size"])).offset(int(options["page"]) * int(options["page_size"]))
+
+    if bool(strtobool(options["my_games"])) is True:
+        if user:
+            stmt = stmt.where(or_(
+                models.User.in_(
+                    select(models.Player.user).where(models.Player.game == models.Game).where(models.User == user)
+                ),
+                models.Session.in_(
+                    select(models.Player.session).where(models.Player.game == models.Game).where(models.Session == session)
+                )
+            ))
+        else:
+            stmt = stmt.where(models.Session.__table__.columns.session_id.in_(
+                select(models.Player.session_id)
+                .where(models.Player.session == session)
+                .where(models.Player.game_id == models.Game.game_id)
+            ))
+
+    session: AsyncSession = request.ctx.session
+
+    print(stmt.compile(session.bind))
+
+    async with session.begin():
+        game_result: Result = await session.execute(stmt)
+        game_results = game_result.all()
+
+    resp = [game["Game"].to_dict() for game in game_results]
+
+    return json(resp)
+
+    #return json({
+    #    "myGames": options.myGames,
+    #    "iveWon": options.iveWon,
+    #    "imWhite": options.imWhite,
+    #    "perPage": options.perPage,
+    #    "page": options.page
+    #})
 
 
 @chess_blueprint.post("/game")

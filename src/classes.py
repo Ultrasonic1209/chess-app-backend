@@ -148,7 +148,5 @@ class GetGameOptions:
     So people can find out what online games they can view
     """
     my_games: bool
-    ive_won: bool
-    im_white: bool
-    per_page: int
+    page_size: int
     page: int
