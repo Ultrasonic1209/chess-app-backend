@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 
-from auth import is_logged_in, get_hostname, has_session
+from auth import is_logged_in, has_session
 from classes import Request, LoginBody, LoginResponse
 
 import models

@@ -60,10 +60,14 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         if user:
             stmt = stmt.where(or_(
                 models.User.in_(
-                    select(models.Player.user).where(models.Player.game == models.Game).where(models.User == user)
+                    select(models.Player.session_id)
+                    .where(models.Player.user == user)
+                    .where(models.Player.game_id == models.Game.game_id)
                 ),
-                models.Session.in_(
-                    select(models.Player.session).where(models.Player.game == models.Game).where(models.Session == session)
+                models.Session.__table__.columns.session_id.in_(
+                    select(models.Player.session_id)
+                    .where(models.Player.session == session)
+                    .where(models.Player.game_id == models.Game.game_id)
                 )
             ))
         else:
