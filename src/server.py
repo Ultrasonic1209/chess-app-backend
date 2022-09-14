@@ -41,7 +41,8 @@ app.extend(config=AppConfig(
     cors_origins=[
         re.compile(r"^https://(.*)ultras-playroom\.xyz"), # main domain
         re.compile(r"https://chess-app-frontend-?(.*)-ultrasonic1209\.vercel\.app"), # vercel previews
-        re.compile(r"https://tauri\.localhost") # tauri demo
+        re.compile(r"https://tauri\.localhost"), # tauri demo
+        re.compile(r"https://ultrasonic1209-(.*)\.githubpreview\.dev") # gh codespace web previews
     ], # re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)")
     cors_supports_credentials=True,
     cors_allow_headers=["content-type"],
