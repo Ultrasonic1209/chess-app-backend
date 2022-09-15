@@ -2,6 +2,7 @@
 Represents the database as a bunch of Python objects.
 """
 from typing import List, Optional
+from email.headerregistry import Address
 
 import arrow
 
@@ -23,6 +24,20 @@ Base = declarative_base()
 
 _LAZYMETHOD = "selectin"
 
+def censor_email(email: str):
+    """
+    Takes an email and censors all but the domain and the first few digits of the name.
+    """
+    address = Address(addr_spec=email)
+
+    username = address.username
+
+    exposedlength = min(3, len(username)-1)
+
+    username = username[:exposedlength] + ("*" * (len(username) - exposedlength))
+
+    return str(Address(username=username, domain=address.domain))
+
 class BaseModel(Base):
     """
     Base Model
@@ -43,12 +58,12 @@ class User(BaseModel):
 
     __tablename__ = "User"
 
-    user_id = Column(
+    user_id: int = Column(
         INTEGER(),
         primary_key=True
     )
 
-    username = Column(
+    username: str = Column(
         String(63),
         nullable=False,
         unique=True
@@ -59,7 +74,7 @@ class User(BaseModel):
         nullable=False
     )
 
-    email = Column(
+    email: str = Column(
         EmailType(length=127),
         nullable=True
     )
@@ -85,7 +100,7 @@ class User(BaseModel):
     def to_dict(self):
         return {
             "name": self.username,
-            "email": self.email,
+            "email": censor_email(self.email),
             "timeCreated": self.time_created.isoformat(),
         }
 
@@ -222,7 +237,11 @@ class Game(BaseModel):
             "time_started": self.time_started.isoformat() if self.time_started else None,
             "time_ended": self.time_ended.isoformat() if self.time_ended else None,
             "white_won": self.white_won,
-            "players": [{"username": player.user.username if player.user else None, "userId": player.user.user_id if player.user else None, "isWhite": player.is_white} for player in self.players],
+            "players": [{
+                "username": player.user.username if player.user else None,
+                "userId": player.user.user_id if player.user else None,
+                "isWhite": player.is_white
+            } for player in self.players],
             "timer": self.timer.timer_name,
             "time_limit": self.timeLimit,
             "game": self.game
