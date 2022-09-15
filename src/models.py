@@ -1,6 +1,7 @@
 """
 Represents the database as a bunch of Python objects.
 """
+from dataclasses import MISSING
 from typing import List, Optional
 from email.headerregistry import Address
 
@@ -24,10 +25,12 @@ Base = declarative_base()
 
 _LAZYMETHOD = "selectin"
 
-def censor_email(email: str):
+def censor_email(email: Optional[str] = None):
     """
     Takes an email and censors all but the domain and the first few digits of the name.
     """
+    if str is None: return ""
+
     address = Address(addr_spec=email)
 
     username = address.username
