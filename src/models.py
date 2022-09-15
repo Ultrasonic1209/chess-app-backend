@@ -29,7 +29,8 @@ def censor_email(email: Optional[str] = None):
     """
     Takes an email and censors all but the domain and the first few digits of the name.
     """
-    if str is None: return ""
+    if str is None:
+        return ""
 
     address = Address(addr_spec=email)
 
