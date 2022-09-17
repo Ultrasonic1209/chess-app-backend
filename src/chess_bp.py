@@ -43,7 +43,7 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
 @openapi.parameter("my_games", bool, required=True)
 @openapi.parameter("page_size", int, required=True)
 @openapi.parameter("page", int, required=True)
-@openapi.response(status=200, content={"application/json": List[PublicChessGame]})
+@openapi.response(status=200, content={"application/json": List[PublicChessGameResponse]})
 @validate(query=GetGameOptions, query_argument="options")
 @has_session()
 async def get_games(request: Request, options: GetGameOptions, user: models.User, session: models.Session):
@@ -91,18 +91,18 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         game_result: Result = await session.execute(stmt)
         game_results = game_result.all()
 
-    games: List[models.Game] = map(lambda row: game_results["Game"], game_results)
+    games: List[models.Game] = [game["Game"] for game in game_results]
 
-    games = [game.to_dict() for game in games]
-
-    def process_game(game: models.Game):
+    def process_game(game: models.Game) -> PublicChessGameResponse:
         """
         Sets the `is_white` flag for games.
         """
-        game["is_white"] = get_player_team(game=game, session=session, user=user)
-        return game
+        dictgame: PublicChessGame = game.to_dict()
 
-    games = map(process_game, games)
+        dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
+        return dictgame
+
+    games: List[PublicChessGameResponse] = [process_game(game) for game in games]
 
     return json(games)
 
