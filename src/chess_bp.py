@@ -3,7 +3,7 @@ Will handle everything related to chess games.
 """
 from io import StringIO
 import random
-from typing import Optional
+from typing import List, Optional
 from distutils.util import strtobool
 
 import chess
@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 from sqlalchemy.sql.expression import Select
 
-from classes import PublicChessGameResponse, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove, GetGameOptions
+from classes import PublicChessGame, PublicChessGameResponse, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove, GetGameOptions
 
 from auth import has_session
 
@@ -43,6 +43,7 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
 @openapi.parameter("my_games", bool, required=True)
 @openapi.parameter("page_size", int, required=True)
 @openapi.parameter("page", int, required=True)
+@openapi.response(status=200, content={"application/json": List[PublicChessGame]})
 @validate(query=GetGameOptions, query_argument="options")
 @has_session()
 async def get_games(request: Request, options: GetGameOptions, user: models.User, session: models.Session):
@@ -90,17 +91,20 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         game_result: Result = await session.execute(stmt)
         game_results = game_result.all()
 
-    resp = [game["Game"].to_dict() for game in game_results]
+    games: List[models.Game] = map(lambda row: game_results["Game"], game_results)
 
-    return json(resp)
+    games = [game.to_dict() for game in games]
 
-    #return json({
-    #    "myGames": options.myGames,
-    #    "iveWon": options.iveWon,
-    #    "imWhite": options.imWhite,
-    #    "perPage": options.perPage,
-    #    "page": options.page
-    #})
+    def process_game(game: models.Game):
+        """
+        Sets the `is_white` flag for games.
+        """
+        game["is_white"] = get_player_team(game=game, session=session, user=user)
+        return game
+
+    games = map(process_game, games)
+
+    return json(games)
 
 
 @chess_blueprint.post("/game")

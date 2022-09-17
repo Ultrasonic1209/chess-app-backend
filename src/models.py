@@ -51,7 +51,7 @@ class BaseModel(Base):
 
     def to_dict(self):
         """
-        Converts the user from an SQL object to a Python dictionary.
+        Converts the model from an SQL object to a Python dictionary.
         """
         return {}
 
