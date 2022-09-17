@@ -5,12 +5,11 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 """
 
 from datetime import datetime, timedelta
-import secrets
 
 import jwt
 import httpx
 
-from sanic import Blueprint, json
+from sanic import Blueprint, json, text
 from sanic.log import logger
 from sanic_ext import validate, openapi
 
@@ -213,3 +212,50 @@ async def identify(request: Request, user: models.User, session: models.Session)
     """
 
     return json(user.to_dict())
+
+@login.post("/signup")
+@has_session()
+async def new_user(request: Request, user: models.User, session: models.Session):
+    """
+    
+    Creates a new user. **Temporary**
+
+    openapi:
+    ---
+    parameters:
+      - name: x-admin-key
+        in: header
+        description: This needs to be correct.
+        required: true
+      - name: x-username
+        in: header
+        description: Username
+        required: true
+      - name: x-password
+        in: header
+        description: Password.
+        required: true
+      - name: x-email
+        in: header
+        description: Email.
+        required: false
+    """
+
+    auth = request.headers.get("x-admin-key")
+
+    if auth != "***REMOVED***":
+        return text("hint: first name, capital S", status=401)
+
+    if user:
+        return text("You are already logged into an account!", status=400)
+
+    session: AsyncSession = request.ctx.session
+    async with session.begin():
+        user = models.User()
+
+        user.username = request.headers.get("x-username")
+        user.password = request.headers.get("x-password")
+        user.email = request.headers.get("x-email")
+
+        session.add(user)
+
