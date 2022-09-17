@@ -56,6 +56,8 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
 
     stmt = stmt.limit(int(options["page_size"])).offset(int(options["page"]) * int(options["page_size"]))
 
+    stmt = stmt.distinct()
+
     if bool(strtobool(options["my_games"])) is True:
         if user:
             stmt = stmt.where(or_(
@@ -70,6 +72,9 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
                     .where(models.Player.game_id == models.Game.game_id)
                 )
             ))
+            # cartesian product here is unavoidable due to the or_ being present
+            # we need the secondary check for session incase someone logs in whilst having unregistered games
+            # wouldnt want them losing control of their game!
         else:
             stmt = stmt.where(models.Session.__table__.columns.session_id.in_(
                 select(models.Player.session_id)
