@@ -26,7 +26,7 @@ HTTPX_CLIENT = httpx.AsyncClient()
 
 login = Blueprint("login", url_prefix="/login")
 
-async def verify_captcha(given_solution: str, fc_secret: str):
+async def verify_captcha(given_solution: str, fc_secret: str, user_facing_message: str = "Success!"):
     """
     Takes FC solution and validates it
     """
@@ -50,14 +50,12 @@ async def verify_captcha(given_solution: str, fc_secret: str):
         }
         if "errors" in resp_body.keys():
             toreturn["errorCode"] = resp_body["errors"][0]
-
-        return toreturn
     elif resp.status_code in [400, 401]:
         logger.error(
             "Could not verify Friendly Captcha solution due to client error:\n%s",
             resp_body
         )
-        return {
+        toreturn = {
             "accept": True,
             "errorCode": resp_body["errors"][0]
         }
@@ -66,10 +64,36 @@ async def verify_captcha(given_solution: str, fc_secret: str):
             "Could not verify Friendly Captcha solution due to external issue:\n%s",
             resp_body
         )
-        return {
+        toreturn = {
             "accept": True,
             "errorCode": "unknown_error"
         }
+
+    accept = bool(toreturn.get("accept", False))
+
+    if accept is False:
+
+        accept = True
+
+        match toreturn["errorCode"]:
+            case "secret_missing":
+                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
+            case "secret_invalid":
+                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
+            case "solution_missing":
+                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
+            case "bad_request":
+                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
+            case "solution_invalid":
+                user_facing_message = "Invalid captcha solution."
+                accept = False
+            case "solution_timeout_or_duplicate":
+                user_facing_message = "Expired captcha solution. Please refresh the page."
+                accept = False
+            case _:
+                user_facing_message = toreturn["errorCode"]
+
+    return accept, user_facing_message
 
 @login.post("/")
 @openapi.body(LoginBody)
@@ -90,37 +114,17 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
 
     given_solution = params.frcCaptchaSolution
 
-    captcha_resp = await verify_captcha(given_solution, request.app.config.FC_SECRET)
+    accept, user_facing_message = await verify_captcha(
+        given_solution,
+        request.app.config.FC_SECRET,
+        "Signed you in! Redirecting..."
+    )
 
-    user_facing_message = "Signed you in! Redirecting..." # the toast people will see after they're redirected to homepage (sign-in complete)
-
-    if bool(captcha_resp.get("accept", False)) is False:
-
-        accept = True
-
-        match captcha_resp["errorCode"]:
-            case "secret_missing":
-                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
-            case "secret_invalid":
-                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
-            case "solution_missing":
-                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
-            case "bad_request":
-                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
-            case "solution_invalid":
-                user_facing_message = "Invalid captcha solution."
-                accept = False
-            case "solution_timeout_or_duplicate":
-                user_facing_message = "Expired captcha solution. Please refresh the page."
-                accept = False
-            case _:
-                user_facing_message = captcha_resp["errorCode"]
-
-        if not accept:
-            return json({
-                "accept": False,
-                "userFacingMessage": user_facing_message
-            })
+    if not accept:
+        return json({
+            "accept": False,
+            "userFacingMessage": user_facing_message
+        })
 
     query_session: AsyncSession = request.ctx.session
 
@@ -217,7 +221,7 @@ async def identify(request: Request, user: models.User, session: models.Session)
 @has_session()
 async def new_user(request: Request, user: models.User, session: models.Session):
     """
-    
+
     Creates a new user. **Temporary**
 
     openapi:
@@ -257,4 +261,3 @@ async def new_user(request: Request, user: models.User, session: models.Session)
         querysession.add(user)
 
     return json(user.to_dict())
-
