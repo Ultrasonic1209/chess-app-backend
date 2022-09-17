@@ -246,16 +246,15 @@ async def new_user(request: Request, user: models.User, session: models.Session)
     if auth != "***REMOVED***":
         return text("hint: first name, capital S", status=401)
 
-    if user:
-        return text("You are already logged into an account!", status=400)
-
-    session: AsyncSession = request.ctx.session
-    async with session.begin():
+    querysession: AsyncSession = request.ctx.session
+    async with querysession.begin():
         user = models.User()
 
         user.username = request.headers.get("x-username")
         user.password = request.headers.get("x-password")
         user.email = request.headers.get("x-email")
 
-        session.add(user)
+        querysession.add(user)
+
+    return json(user.to_dict())
 
