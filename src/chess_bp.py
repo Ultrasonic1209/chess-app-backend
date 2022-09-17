@@ -59,8 +59,8 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
     if bool(strtobool(options["my_games"])) is True:
         if user:
             stmt = stmt.where(or_(
-                models.User.in_(
-                    select(models.Player.session_id)
+                models.User.__table__.columns.user_id.in_(
+                    select(models.Player.user_id)
                     .where(models.Player.user == user)
                     .where(models.Player.game_id == models.Game.game_id)
                 ),
