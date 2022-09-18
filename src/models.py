@@ -50,6 +50,7 @@ def hash_email(email: str):
     """
     email = email.strip().lower().encode("utf-8")
     return hashlib.md5(email).hexdigest()
+
 class BaseModel(Base):
     """
     Base Model
