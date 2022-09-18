@@ -1,9 +1,9 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from dataclasses import MISSING
 from typing import List, Optional
 from email.headerregistry import Address
+import hashlib
 
 import arrow
 
@@ -42,6 +42,14 @@ def censor_email(email: Optional[str] = None):
 
     return str(Address(username=username, domain=address.domain))
 
+ANONYMOUS_IMG = "https://dev.chessapp.ultras-playroom.xyz/maskable_icon.png"
+
+def hash_email(email: str):
+    """
+    Takes an email and returns a hash for use for Gravatar
+    """
+    email = email.lower().encode("utf-8")
+    return hashlib.md5(email).hexdigest()
 class BaseModel(Base):
     """
     Base Model
@@ -116,6 +124,16 @@ class Player(BaseModel):
 
     __tablename__ = "Player"
 
+
+    def get_avatar_url(self):
+        """
+        Returns the Gravatar URL for the player.
+        """
+        if self.user:
+            return f"https://www.gravatar.com/avatar/{hash_email(self.user.email)}?s=625&d={ANONYMOUS_IMG}"
+        else:
+            return ANONYMOUS_IMG
+
     game_id = Column(
         ForeignKey("Game.game_id"),
         nullable=False,
@@ -158,11 +176,12 @@ class Player(BaseModel):
         lazy=_LAZYMETHOD
     )
 
-    def to_dict(self):
+    def to_dict(self) -> classes.PublicChessPlayer:
         return {
             "user_id": self.user_id,
             "game_id": self.game_id,
-            "is_white": self.is_white
+            "is_white": self.is_white,
+            "avatar_url": self.get_avatar_url()
         }
 
 class GameTimer(BaseModel):
