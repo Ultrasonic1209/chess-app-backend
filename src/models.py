@@ -263,7 +263,8 @@ class Game(BaseModel):
             "players": [{
                 "username": player.user.username if player.user else None,
                 "userId": player.user.user_id if player.user else None,
-                "isWhite": player.is_white
+                "isWhite": player.is_white,
+                "avatar_url": player.get_avatar_url()
             } for player in self.players],
             "timer": self.timer.timer_name,
             "time_limit": self.timeLimit,
