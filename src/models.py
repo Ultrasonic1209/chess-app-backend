@@ -48,7 +48,7 @@ def hash_email(email: str):
     """
     Takes an email and returns a hash for use for Gravatar
     """
-    email = email.lower().encode("utf-8")
+    email = email.strip().lower().encode("utf-8")
     return hashlib.md5(email).hexdigest()
 class BaseModel(Base):
     """
