@@ -25,7 +25,7 @@ import models
 
 load_dotenv()
 
-ISDEV = bool(os.getenv("DEV"))
+ISDEV = bool(os.getenv("DEV")) or (os.getenv("GITHUB_CODESPACE_TOKEN") and True)
 
 repo = git.Repo(search_parent_directories=True)
 sha = repo.head.object.hexsha
@@ -78,7 +78,7 @@ sqlpass = os.getenv("SQL_PASSWORD", "")
 
 bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
-    echo=False,
+    echo=ISDEV,
     pool_pre_ping=True,
 )
 
