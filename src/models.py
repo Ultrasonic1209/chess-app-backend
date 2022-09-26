@@ -89,6 +89,12 @@ class User(BaseModel):
         nullable=False
     )
 
+    score = Column(
+        INTEGER(),
+        nullable=False,
+        default=400
+    )
+
     email: str = Column(
         EmailType(length=127),
         nullable=True
