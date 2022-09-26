@@ -78,7 +78,7 @@ class User(BaseModel):
         Returns the Gravatar URL for the user.
         """
         if self.email:
-            return f"https://www.gravatar.com/avatar/{hash_email(self.email)}?s=625&d={ANONYMOUS_IMG}"
+            return f"https://www.gravatar.com/avatar/{hash_email(self.email)}?d={ANONYMOUS_IMG}"
 
     user_id: int = Column(
         INTEGER(),
@@ -130,6 +130,7 @@ class User(BaseModel):
             "name": self.username,
             "email": censor_email(self.email),
             "avatar_url": self.get_avatar_url(),
+            "rank": self.score,
             "timeCreated": self.time_created.isoformat(),
         }
 
@@ -195,6 +196,7 @@ class Player(BaseModel):
             "user_id": self.user_id,
             "game_id": self.game_id,
             "is_white": self.is_white,
+            "rank": self.user.score if self.user else None,
             "avatar_url": self.get_avatar_url()
         }
 
