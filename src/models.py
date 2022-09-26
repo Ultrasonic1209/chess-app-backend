@@ -143,11 +143,11 @@ class Player(BaseModel):
     __tablename__ = "Player"
 
 
-    def get_avatar_url(self):
+    def get_avatar_hash(self):
         """
-        Returns the Gravatar URL for the player.
+        Returns the Gravatar hash for the player.
         """
-        return self.user.get_avatar_url() if self.user else ANONYMOUS_IMG
+        return self.user.get_avatar_hash() if self.user else ""
 
     game_id = Column(
         ForeignKey("Game.game_id"),
