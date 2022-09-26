@@ -73,6 +73,13 @@ class User(BaseModel):
 
     __tablename__ = "User"
 
+    def get_avatar_url(self):
+        """
+        Returns the Gravatar URL for the user.
+        """
+        if self.email:
+            return f"https://www.gravatar.com/avatar/{hash_email(self.email)}?s=625&d={ANONYMOUS_IMG}"
+
     user_id: int = Column(
         INTEGER(),
         primary_key=True
@@ -122,6 +129,7 @@ class User(BaseModel):
         return {
             "name": self.username,
             "email": censor_email(self.email),
+            "avatar_url": self.get_avatar_url(),
             "timeCreated": self.time_created.isoformat(),
         }
 
@@ -138,10 +146,7 @@ class Player(BaseModel):
         """
         Returns the Gravatar URL for the player.
         """
-        if self.user:
-            return f"https://www.gravatar.com/avatar/{hash_email(self.user.email)}?s=625&d={ANONYMOUS_IMG}"
-        else:
-            return ANONYMOUS_IMG
+        return self.user.get_avatar_url() if self.user else ANONYMOUS_IMG
 
     game_id = Column(
         ForeignKey("Game.game_id"),
