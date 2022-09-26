@@ -193,7 +193,8 @@ class Player(BaseModel):
 
     def to_dict(self) -> classes.PublicChessPlayer:
         return {
-            "user_id": self.user_id,
+            "userId": self.user_id,
+            "username": self.user.username if self.user else None,
             "game_id": self.game_id,
             "is_white": self.is_white,
             "rank": self.user.score if self.user else None,
