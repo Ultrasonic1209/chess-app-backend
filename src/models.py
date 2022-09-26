@@ -198,7 +198,7 @@ class Player(BaseModel):
             "game_id": self.game_id,
             "is_white": self.is_white,
             "rank": self.user.score if self.user else None,
-            "avatar_url": self.get_avatar_hash()
+            "avatar_hash": self.get_avatar_hash()
         }
 
 class GameTimer(BaseModel):
