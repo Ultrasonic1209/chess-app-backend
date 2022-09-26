@@ -75,7 +75,7 @@ class User(BaseModel):
 
     def get_avatar_hash(self):
         """
-        Returns the Gravatar URL for the user.
+        Returns the Gravatar hash for the user.
         """
         if self.email:
             return hash_email(self.email)
