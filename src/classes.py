@@ -88,7 +88,7 @@ class PublicChessPlayer(TypedDict):
     userId: Optional[int]
     isWhite: bool
     rank: Optional[int]
-    avatar_url: str
+    avatar_hash: str
 
 class PublicChessGame(TypedDict):
     """

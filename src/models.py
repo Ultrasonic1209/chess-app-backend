@@ -73,12 +73,12 @@ class User(BaseModel):
 
     __tablename__ = "User"
 
-    def get_avatar_url(self):
+    def get_avatar_hash(self):
         """
         Returns the Gravatar URL for the user.
         """
         if self.email:
-            return f"https://www.gravatar.com/avatar/{hash_email(self.email)}?d={ANONYMOUS_IMG}"
+            return hash_email(self.email)
 
     user_id: int = Column(
         INTEGER(),
@@ -129,7 +129,7 @@ class User(BaseModel):
         return {
             "name": self.username,
             "email": censor_email(self.email),
-            "avatar_url": self.get_avatar_url(),
+            "avatar_hash": self.get_avatar_hash(),
             "rank": self.score,
             "timeCreated": self.time_created.isoformat(),
         }
