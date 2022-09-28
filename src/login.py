@@ -137,9 +137,9 @@ async def identify(request: Request, user: models.User, session: models.Session)
 @openapi.body(SignupBody)
 @openapi.response(status=200, content={"application/json": SignupResponse}, description="When an account is made")
 @validate(json=SignupBody, body_argument="params")
-#@validate_request_captcha(success_facing_message="Please log into your new account.")
+@validate_request_captcha(success_facing_message="Please log into your new account.")
 @has_session()
-async def new_user(request: Request, params: SignupBody, user: models.User, session: models.Session, user_facing_message: str=""):
+async def new_user(request: Request, params: SignupBody, user: models.User, session: models.Session, user_facing_message: str):
     """
     Creates a new user.
     Uses the same captcha as /login
