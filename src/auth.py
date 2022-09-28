@@ -45,7 +45,7 @@ def check_token(request: Request) -> Optional[Token]:
             key=request.app.config.SECRET,
             algorithms=["HS256"]
         )
-    except (jwt.exceptions.InvalidTokenError):
+    except jwt.exceptions.InvalidTokenError:
         return None
 
 async def authenticate_request(request: Request):

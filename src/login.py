@@ -7,100 +7,30 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 from datetime import datetime, timedelta
 
 import jwt
-import httpx
 
-from sanic import Blueprint, json, text
-from sanic.log import logger
+from sanic import Blueprint, json
 from sanic_ext import validate, openapi
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
+from sqlalchemy import exc
 
 from auth import is_logged_in, has_session
-from classes import Request, LoginBody, LoginResponse
+from captcha import validate_request_captcha
+from classes import Request, LoginBody, LoginResponse, SignupBody, SignupResponse
 
 import models
 
-HTTPX_CLIENT = httpx.AsyncClient()
-
 login = Blueprint("login", url_prefix="/login")
-
-async def verify_captcha(given_solution: str, fc_secret: str, user_facing_message: str = "Success!"):
-    """
-    Takes FC solution and validates it
-    """
-
-    resp = await HTTPX_CLIENT.post(
-        "https://api.friendlycaptcha.com/api/v1/siteverify",
-        json={
-            "solution": given_solution,
-            "secret": fc_secret,
-            "sitekey": "FCMM6JV285I5GS1J"
-        }
-    )
-
-    resp_body: dict = resp.json()
-
-    if resp.status_code == 200:
-
-        toreturn = {
-            "accept": bool(resp_body["success"]),
-            "errorCode": False
-        }
-        if "errors" in resp_body.keys():
-            toreturn["errorCode"] = resp_body["errors"][0]
-    elif resp.status_code in [400, 401]:
-        logger.error(
-            "Could not verify Friendly Captcha solution due to client error:\n%s",
-            resp_body
-        )
-        toreturn = {
-            "accept": True,
-            "errorCode": resp_body["errors"][0]
-        }
-    else:
-        logger.error(
-            "Could not verify Friendly Captcha solution due to external issue:\n%s",
-            resp_body
-        )
-        toreturn = {
-            "accept": True,
-            "errorCode": "unknown_error"
-        }
-
-    accept = bool(toreturn.get("accept", False))
-
-    if accept is False:
-
-        accept = True
-
-        match toreturn["errorCode"]:
-            case "secret_missing":
-                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
-            case "secret_invalid":
-                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
-            case "solution_missing":
-                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
-            case "bad_request":
-                user_facing_message = "Non-critical internal server fault with CAPTCHA validation."
-            case "solution_invalid":
-                user_facing_message = "Invalid captcha solution."
-                accept = False
-            case "solution_timeout_or_duplicate":
-                user_facing_message = "Expired captcha solution. Please refresh the page."
-                accept = False
-            case _:
-                user_facing_message = toreturn["errorCode"]
-
-    return accept, user_facing_message
 
 @login.post("/")
 @openapi.body(LoginBody)
 @openapi.response(status=200, content={"application/json": LoginResponse}, description="When a valid login attempt is made")
 @validate(json=LoginBody, body_argument="params")
+@validate_request_captcha(success_facing_message="Signed you in! Redirecting...")
 @has_session()
-async def do_login(request: Request, params: LoginBody, user: models.User, session: models.Session):
+async def do_login(request: Request, params: LoginBody, user_facing_message: str, user: models.User, session: models.Session):
     """
     Assigns JSON Web Token
     Captcha is provided by https://friendlycaptcha.com/
@@ -109,21 +39,7 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
     if session.user:
         return json({
             "accept": False,
-            "userFacingMessage": "You are already logged in!"
-        })
-
-    given_solution = params.frcCaptchaSolution
-
-    accept, user_facing_message = await verify_captcha(
-        given_solution,
-        request.app.config.FC_SECRET,
-        "Signed you in! Redirecting..."
-    )
-
-    if not accept:
-        return json({
-            "accept": False,
-            "userFacingMessage": user_facing_message
+            "message": "You are already logged in!"
         })
 
     query_session: AsyncSession = request.ctx.session
@@ -145,7 +61,7 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
             return json(
                 {
                     "accept": False,
-                    "userFacingMessage": "Invalid username or password."
+                    "message": "Invalid username or password."
                 }
             )
 
@@ -156,7 +72,7 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
             return json(
                 {
                     "accept": False,
-                    "userFacingMessage": "Invalid username or password."
+                    "message": "Invalid username or password."
                 }
             )
 
@@ -176,7 +92,7 @@ async def do_login(request: Request, params: LoginBody, user: models.User, sessi
     response = json(
         {
             "accept": True,
-            "userFacingMessage": user_facing_message,
+            "message": user_facing_message,
             "profile": user.to_dict()
         }
     )
@@ -218,48 +134,44 @@ async def identify(request: Request, user: models.User, session: models.Session)
     return json(user.to_dict())
 
 @login.post("/signup")
+@openapi.body(SignupBody)
+@openapi.response(status=200, content={"application/json": SignupResponse}, description="When an account is made")
+@validate(json=SignupBody, body_argument="params")
+#@validate_request_captcha(success_facing_message="Please log into your new account.")
 @has_session()
-async def new_user(request: Request, user: models.User, session: models.Session):
+async def new_user(request: Request, params: SignupBody, user: models.User, session: models.Session, user_facing_message: str=""):
+    """
+    Creates a new user.
+    Uses the same captcha as /login
     """
 
-    Creates a new user. **Temporary**
-
-    openapi:
-    ---
-    parameters:
-      - name: x-admin-key
-        in: header
-        description: This needs to be correct.
-        required: true
-      - name: x-username
-        in: header
-        description: Username
-        required: true
-      - name: x-password
-        in: header
-        description: Password.
-        required: true
-      - name: x-email
-        in: header
-        description: Email.
-        required: false
-    """
-
-    auth = request.headers.get("x-admin-key")
-
-    if auth != "***REMOVED***":
-        return text("hint: first name, capital S", status=401)
+    if session.user:
+        return json({
+            "accept": False,
+            "message": "Sign out before creating a new account."
+        })
 
     query_session: AsyncSession = request.ctx.session
-    async with query_session.begin():
-        user = models.User()
+    try:
+        async with query_session.begin():
+            user = models.User()
 
-        user.username = request.headers.get("x-username")
-        user.password = request.headers.get("x-password")
-        user.email = request.headers.get("x-email")
+            user.username = params.username
+            user.password = params.password
+            user.email = params.email if params.email != "" else None
 
-        query_session.add(user)
+            query_session.add(user)
+    except exc.IntegrityError:
+        return json({
+            "accept": False,
+            "message": "An account with this username already exists or you have provided invalid information."
+        }, status=400)
 
     await query_session.refresh(user)
 
-    return json(user.to_dict())
+    #session.user = user
+
+    return json({
+        "accept": True,
+        "message": user_facing_message
+    })

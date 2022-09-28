@@ -7,6 +7,7 @@ from textwrap import dedent
 import re
 
 import git
+import httpx
 from dotenv import load_dotenv
 
 from sqlalchemy import inspect
@@ -87,6 +88,13 @@ app.config.FC_SECRET = os.getenv("FRIENDLY_CAPTCHA_SECRET", "")
 
 if not ISDEV:
     app.config.FORWARDED_SECRET = os.getenv("FORWARDED_SECRET", "")
+
+@app.before_server_start
+async def attach_httpx(_app: App, _):
+    """"
+    Attaches a HTTPX client to the server to make requests with
+    """
+    _app.ctx.httpx = httpx.AsyncClient()
 
 _base_model_session_ctx = ContextVar("session")
 

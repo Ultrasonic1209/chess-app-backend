@@ -5,10 +5,12 @@ Holds shared classes that don't fit into `models.py`
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import List, Optional, TypedDict
+
 from sanic import Sanic
 from sanic import Request as SanicRequest
 from sanic_ext import Config
 
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class AppConfig(Config):
@@ -18,17 +20,19 @@ class AppConfig(Config):
     FC_SECRET: str
     SECRET: str
 
-class App(Sanic):
-    """
-    This is to allow typechecking of custom config variables.
-    """
-    config: AppConfig
-
 class Context(SimpleNamespace):
     """
     This is to allow typechecking of custom app context.
     """
     session: AsyncSession
+    httpx: httpx.AsyncClient
+
+class App(Sanic):
+    """
+    This is to allow typechecking of custom config variables.
+    """
+    config: AppConfig
+    ctx: Context
 
 class Request(SanicRequest):
     """
@@ -65,7 +69,7 @@ class LoginResponse:
     Classes the response from /login
     """
     accept: bool
-    userFacingMessage: str
+    message: str
     profile: Optional[User]
 
 @dataclass
@@ -152,3 +156,20 @@ class GetGameOptions:
     my_games: bool
     page_size: int
     page: int
+
+@dataclass
+class SignupBody:
+    """
+    Options for when you make an account
+    """
+    username: str
+    password: str
+    email: str
+    frcCaptchaSolution: str
+
+class SignupResponse:
+    """
+    Responding to an account signup
+    """
+    accept: bool
+    response: str
