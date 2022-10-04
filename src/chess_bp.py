@@ -246,7 +246,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
                 "Black": black.user.username if black.user else "Anonymous",
                 "Result": "*",
 
-                "Annotator": "Checkmate",
+                #"Annotator": "Checkmate",
                 #PlyCount
                 #TimeControl
                 "Time": time.strftime(r"%H:%M:%S"),
