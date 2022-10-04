@@ -7,17 +7,15 @@ import hashlib
 
 import arrow
 
-from sqlalchemy import BOOLEAN, INTEGER, Column, ForeignKey, String, func
+from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy import MetaData
+from sqlalchemy.dialects.mysql.types import INTEGER
 
 from sqlalchemy_utils import PasswordType, EmailType, ArrowType, force_auto_coercion
 
 import classes
 
 force_auto_coercion()
-
-metadata_obj = MetaData()
 
 __all__ = ["Base", "User", "Player", "Game", "Session"]
 
@@ -81,36 +79,42 @@ class User(BaseModel):
             return hash_email(self.email)
 
     user_id: int = Column(
-        INTEGER(),
-        primary_key=True
+        INTEGER(unsigned=True),
+        primary_key=True,
+        comment="User ID"
     )
 
     username: str = Column(
         String(63),
         nullable=False,
-        unique=True
+        unique=True,
+        comment="Username"
 
     )
     password = Column(
         PasswordType(schemes=["pbkdf2_sha512"]),
-        nullable=False
+        nullable=False,
+        comment="Password"
     )
 
     score = Column(
-        INTEGER(),
+        INTEGER(unsigned=True),
         nullable=False,
-        default=400
+        default=400,
+        comment="Player score"
     )
 
     email: str = Column(
         EmailType(length=127),
-        nullable=True
+        nullable=True,
+        comment="Email address"
     )
 
     time_created: arrow.Arrow = Column(
         ArrowType,
         nullable=False,
-        server_default=func.now()
+        server_default=func.now(),
+        comment="Account creation timestamp"
     )
 
     players = relationship(
@@ -152,23 +156,27 @@ class Player(BaseModel):
     game_id = Column(
         ForeignKey("Game.game_id"),
         nullable=False,
-        primary_key=True
+        primary_key=True,
+        comment="Linked Game ID"
     )
 
     is_white = Column(
         BOOLEAN(),
         nullable=False,
-        primary_key=True
+        primary_key=True,
+        comment="Flags the player's colour."
     )
 
     user_id = Column(
         ForeignKey("User.user_id"),
-        nullable=True
+        nullable=True,
+        comment="Linked User ID"
     )
 
     session_id = Column(
         ForeignKey("Session.session_id"),
-        nullable=True
+        nullable=True,
+        comment="Linked Session ID"
     )
 
     user: Optional[User] = relationship(
@@ -210,12 +218,15 @@ class GameTimer(BaseModel):
     __tablename__ = "GameTimer"
 
     timer_id = Column(
-        INTEGER(),
-        primary_key=True
+        INTEGER(unsigned=True),
+        primary_key=True,
+        comment="Timer ID"
     )
 
     timer_name = Column(
-        String(15)
+        String(15),
+        nullable=False,
+        comment="Timer Name"
     )
 class Game(BaseModel):
     """
@@ -225,38 +236,45 @@ class Game(BaseModel):
     __tablename__ = "Game"
 
     game_id = Column(
-        INTEGER(),
-        primary_key=True
+        INTEGER(unsigned=True),
+        primary_key=True,
+        comment="Game ID"
     )
 
     game = Column(
-        String(2047),
-        nullable=True
+        String(8192),
+        nullable=True,
+        comment="Holds game metadata and a list of moves made"
     )
 
     time_started: Optional[arrow.Arrow] = Column(
         ArrowType,
-        nullable=True
+        nullable=True,
+        comment="Game start timestamp"
     )
 
     time_ended: Optional[arrow.Arrow] = Column(
         ArrowType,
-        nullable=True
+        nullable=True,
+        comment="Game end timestamp"
     )
 
     white_won = Column(
         BOOLEAN(),
-        nullable=True
+        nullable=True,
+        comment="Whether the player playing white won or not"
     )
 
     timer_id = Column(
         ForeignKey("GameTimer.timer_id"),
-        nullable=False
+        nullable=False,
+        comment="The game's timer ID"
     )
 
     timeLimit: int = Column(
-        INTEGER(),
-        nullable=True
+        INTEGER(unsigned=True),
+        nullable=True,
+        comment="The amount of time each player gets"
     )
 
     timer: GameTimer = relationship(
@@ -291,9 +309,10 @@ class Session(Base):
     __tablename__ = "Session"
 
     session_id = Column(
-        INTEGER(),
+        INTEGER(unsigned=True),
         nullable=False,
-        primary_key=True
+        primary_key=True,
+        comment="Session ID"
     )
 
     session = Column(
@@ -301,12 +320,14 @@ class Session(Base):
         primary_key=False,
         nullable=False,
         unique=True,
-        index=True
+        index=True,
+        comment="Session Token (Password for machines)"
     )
 
     user_id = Column(
         ForeignKey("User.user_id"),
-        nullable=True
+        nullable=True,
+        comment="Linked User ID"
     )
 
     user: Optional[User] = relationship(

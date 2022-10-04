@@ -1,3 +1,6 @@
+"""
+Responsible for captcha validation.
+"""
 from functools import wraps
 
 from sanic import json
