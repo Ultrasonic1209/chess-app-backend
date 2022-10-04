@@ -290,6 +290,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         if game.time_started is None:
             return json({"message": "game has not started"}, status=400)
 
+        if game.time_ended is not None:
+            return json({"message": "game is over"}, status=400)
+
         playeriswhite = get_player_team(game=game, session=session, user=user)
 
         if playeriswhite is None:
@@ -347,8 +350,30 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
                 black -= seconds_since_start - time_moving
 
             if white <= 0:
+                chessgame.headers["Result"] = "0-1"
+                chessgame.headers["Termination"] = "time forefit"
+
+                exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+
+                pgn_string = chessgame.accept(exporter)
+
+                game.game = pgn_string
+
+                game.time_ended = arrow.now()
+
                 return json({"message": "white ran out of time"})
             elif black <= 0:
+                chessgame.headers["Result"] = "1-0"
+                chessgame.headers["Termination"] = "time forefit"
+
+                exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+
+                pgn_string = chessgame.accept(exporter)
+
+                game.game = pgn_string
+
+                game.time_ended = arrow.now()
+
                 return json({"message": "black ran out of time"})
 
             chessgame.end().add_line([move])
@@ -358,6 +383,11 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
         else:
             chessgame.end().add_line([move])
             chessgame.end().set_clock(seconds_since_start)
+
+        outcome = chessgame.end().board().outcome()
+        if outcome:
+            chessgame.headers["Result"] = outcome.result()
+            chessgame.headers["Termination"] = "normal"
 
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
 
