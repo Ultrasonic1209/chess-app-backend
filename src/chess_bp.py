@@ -384,12 +384,12 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             chessgame.end().add_line([move])
             chessgame.end().set_clock(seconds_since_start)
 
-        outcome = chessgame.end().board().outcome()
-        if outcome:
+        if outcome := chessgame.end().board().outcome():
             chessgame.headers["Result"] = outcome.result()
             chessgame.headers["Termination"] = "normal"
 
             game.time_ended = arrow.now()
+            game.white_won = outcome.winner
 
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
 
