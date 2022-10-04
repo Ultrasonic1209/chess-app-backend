@@ -389,6 +389,8 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             chessgame.headers["Result"] = outcome.result()
             chessgame.headers["Termination"] = "normal"
 
+            game.time_ended = arrow.now()
+
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
 
         pgn_string = chessgame.accept(exporter)
