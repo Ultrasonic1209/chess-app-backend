@@ -115,7 +115,6 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
 async def create_game(request: Request, options: NewChessGameOptions, user: models.User, session: models.Session):
     """
     Creates a chess game in the database, being logged in is optional
-    TODO make creation options work
     """
     query_session: AsyncSession = request.ctx.session
 
