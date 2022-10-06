@@ -106,8 +106,9 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
                 chessgame.headers["Result"] = outcome.result()
                 chessgame.headers["Termination"] = "normal"
 
-                game.time_ended = arrow.now()
-                game.white_won = outcome.winner
+                async with session.begin():
+                    game.time_ended = arrow.now()
+                    game.white_won = outcome.winner
 
         dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
         return dictgame
