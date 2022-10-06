@@ -93,7 +93,7 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
 
     games: List[models.Game] = [game["Game"] for game in game_results]
 
-    def process_game(game: models.Game) -> PublicChessGameResponse:
+    async def process_game(game: models.Game) -> PublicChessGameResponse:
         """
         Sets the `is_white` flag for games.
         """
@@ -112,7 +112,7 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
         return dictgame
 
-    games: List[PublicChessGameResponse] = [process_game(game) for game in games]
+    games: List[PublicChessGameResponse] = [await process_game(game) for game in games]
 
     return json(games)
 
