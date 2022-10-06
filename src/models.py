@@ -291,33 +291,6 @@ class Game(BaseModel):
         lazy=_LAZYMETHOD
     )
 
-    async def synchronise(self, obj: Optional[chess.pgn.Game] = None):
-        """
-        Brings the columns `white_won` and `time_ended` in sync with the game's state
-        as per the `game` column.
-        """
-        if self.game is None:
-            return self
-
-        chessgame = obj or chess.pgn.read_game(StringIO(self.game))
-
-        if outcome := chessgame.end().board().outcome():
-            chessgame.headers["Result"] = outcome.result()
-            chessgame.headers["Termination"] = "normal"
-
-            if self.time_ended is None:
-                self.time_ended = arrow.now()
-            self.white_won = outcome.winner
-
-            exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
-
-            pgn_string = chessgame.accept(exporter)
-
-            self.game = pgn_string
-
-        return self
-
-
     def to_dict(self) -> classes.PublicChessGame:
         return {
             "game_id": self.game_id,

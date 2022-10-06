@@ -85,7 +85,7 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
 
     session: AsyncSession = request.ctx.session
 
-    print(stmt.compile(session.bind))
+    #print(stmt.compile(session.bind))
 
     async with session.begin():
         game_result: Result = await session.execute(stmt)
@@ -98,6 +98,15 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         Sets the `is_white` flag for games.
         """
         dictgame: PublicChessGame = game.to_dict()
+
+        # not good for DRY but meh
+        chessgame = chess.pgn.read_game(StringIO(game.game))
+        if outcome := chessgame.end().board().outcome():
+            chessgame.headers["Result"] = outcome.result()
+            chessgame.headers["Termination"] = "normal"
+
+            game.time_ended = arrow.now()
+            game.white_won = outcome.winner
 
         dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
         return dictgame
@@ -170,6 +179,16 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
 
         is_white = get_player_team(game=game, session=session, user=user)
 
+        chessgame = chess.pgn.read_game(StringIO(game.game))
+
+        # not good for DRY but meh
+        if outcome := chessgame.end().board().outcome():
+            chessgame.headers["Result"] = outcome.result()
+            chessgame.headers["Termination"] = "normal"
+
+            game.time_ended = arrow.now()
+            game.white_won = outcome.winner
+
 
     gamedict: PublicChessGameResponse = game.to_dict()
 
@@ -199,7 +218,6 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
 
         if game is None:
             return json({"message": "game does not exist"}, status=404)
-
 
         if get_player_team(game=game, session=session, user=user) is not None:
             return json({"message": "you are already in this game"}, status=401)
@@ -384,7 +402,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             chessgame.end().add_line([move])
             chessgame.end().set_clock(seconds_since_start)
 
-        """if outcome := chessgame.end().board().outcome():
+
+        # not good for DRY but meh
+        if outcome := chessgame.end().board().outcome():
             chessgame.headers["Result"] = outcome.result()
             chessgame.headers["Termination"] = "normal"
 
@@ -395,9 +415,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
 
         pgn_string = chessgame.accept(exporter)
 
-        game.game = pgn_string"""
-
-        await game.synchronise(chessgame)
+        game.game = pgn_string
 
     gamedict: PublicChessGameResponse = game.to_dict()
     gamedict["is_white"] = playeriswhite
