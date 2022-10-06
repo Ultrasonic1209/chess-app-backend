@@ -100,13 +100,14 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         dictgame: PublicChessGame = game.to_dict()
 
         # not good for DRY but meh
-        chessgame = chess.pgn.read_game(StringIO(game.game))
-        if outcome := chessgame.end().board().outcome():
-            chessgame.headers["Result"] = outcome.result()
-            chessgame.headers["Termination"] = "normal"
+        if game.game:
+            chessgame = chess.pgn.read_game(StringIO(game.game))
+            if outcome := chessgame.end().board().outcome():
+                chessgame.headers["Result"] = outcome.result()
+                chessgame.headers["Termination"] = "normal"
 
-            game.time_ended = arrow.now()
-            game.white_won = outcome.winner
+                game.time_ended = arrow.now()
+                game.white_won = outcome.winner
 
         dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
         return dictgame
@@ -179,15 +180,16 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
 
         is_white = get_player_team(game=game, session=session, user=user)
 
-        chessgame = chess.pgn.read_game(StringIO(game.game))
+        # who cares about DRY smh
+        if game.game:
+            chessgame = chess.pgn.read_game(StringIO(game.game))
 
-        # not good for DRY but meh
-        if outcome := chessgame.end().board().outcome():
-            chessgame.headers["Result"] = outcome.result()
-            chessgame.headers["Termination"] = "normal"
+            if outcome := chessgame.end().board().outcome():
+                chessgame.headers["Result"] = outcome.result()
+                chessgame.headers["Termination"] = "normal"
 
-            game.time_ended = arrow.now()
-            game.white_won = outcome.winner
+                game.time_ended = arrow.now()
+                game.white_won = outcome.winner
 
 
     gamedict: PublicChessGameResponse = game.to_dict()
