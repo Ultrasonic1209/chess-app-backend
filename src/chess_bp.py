@@ -384,7 +384,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             chessgame.end().add_line([move])
             chessgame.end().set_clock(seconds_since_start)
 
-        if outcome := chessgame.end().board().outcome():
+        """if outcome := chessgame.end().board().outcome():
             chessgame.headers["Result"] = outcome.result()
             chessgame.headers["Termination"] = "normal"
 
@@ -395,7 +395,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
 
         pgn_string = chessgame.accept(exporter)
 
-        game.game = pgn_string
+        game.game = pgn_string"""
+
+        await game.synchronise(chessgame)
 
     gamedict: PublicChessGameResponse = game.to_dict()
     gamedict["is_white"] = playeriswhite

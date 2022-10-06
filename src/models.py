@@ -3,8 +3,10 @@ Represents the database as a bunch of Python objects.
 """
 from typing import List, Optional, Union
 from email.headerregistry import Address
+from io import StringIO
 import hashlib
 
+import chess.pgn
 import arrow
 
 from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func
@@ -288,6 +290,33 @@ class Game(BaseModel):
         back_populates="game",
         lazy=_LAZYMETHOD
     )
+
+    async def synchronise(self, obj: Optional[chess.pgn.Game] = None):
+        """
+        Brings the columns `white_won` and `time_ended` in sync with the game's state
+        as per the `game` column.
+        """
+        if self.game is None:
+            return self
+
+        chessgame = obj or chess.pgn.read_game(StringIO(self.game))
+
+        if outcome := chessgame.end().board().outcome():
+            chessgame.headers["Result"] = outcome.result()
+            chessgame.headers["Termination"] = "normal"
+
+            if self.time_ended is None:
+                self.time_ended = arrow.now()
+            self.white_won = outcome.winner
+
+            exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+
+            pgn_string = chessgame.accept(exporter)
+
+            self.game = pgn_string
+
+        return self
+
 
     def to_dict(self) -> classes.PublicChessGame:
         return {
