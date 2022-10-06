@@ -116,11 +116,19 @@ async def do_logout(request: Request, user: models.User, session: models.Session
     """
     query_session: AsyncSession = request.ctx.session
 
-    async with query_session.begin():
-        await query_session.delete(session)
+    if len(session.players) == 0:
 
-    response = json({"success": True})
-    del response.cookies[".CHECKMATESECRET"]
+        async with query_session.begin():
+            await query_session.delete(session)
+
+        response = json({"success": True})
+        del response.cookies[".CHECKMATESECRET"]
+    else:
+
+        async with query_session.begin():
+            session.user = None
+
+        response = json({"success": True})
 
     return response
 

@@ -338,3 +338,9 @@ class Session(Base):
         uselist=False,
         lazy=_LAZYMETHOD
     )
+
+    players = relationship(
+        "Player",
+        back_populates="session",
+        lazy=_LAZYMETHOD
+    )
