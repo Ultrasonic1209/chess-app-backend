@@ -132,7 +132,7 @@ def has_session(create: bool = True):
                     await query_session.refresh(session)
 
                 response: sanic.HTTPResponse = await func(request, *args, **kwargs, user=user, session=session)
-                
+
                 async with query_session.begin():
                     await query_session.refresh(session)
 

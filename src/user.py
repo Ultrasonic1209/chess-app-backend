@@ -22,9 +22,9 @@ from classes import Request, LoginBody, LoginResponse, SignupBody, SignupRespons
 
 import models
 
-login = Blueprint("login", url_prefix="/login")
+user = Blueprint("user", url_prefix="/user")
 
-@login.post("/")
+@user.post("/login")
 @openapi.body(LoginBody)
 @openapi.response(status=200, content={"application/json": LoginResponse}, description="When a valid login attempt is made")
 @validate(json=LoginBody, body_argument="params")
@@ -108,7 +108,7 @@ async def do_login(request: Request, params: LoginBody, user_facing_message: str
 
     return response
 
-@login.delete("/logout")
+@user.delete("/logout")
 @is_logged_in(silent=True)
 async def do_logout(request: Request, user: models.User, session: models.Session):
     """
@@ -132,7 +132,7 @@ async def do_logout(request: Request, user: models.User, session: models.Session
 
     return response
 
-@login.get("/identify")
+@user.get("/identify")
 @is_logged_in(silent=True)
 async def identify(request: Request, user: models.User, session: models.Session):
     """
@@ -141,7 +141,7 @@ async def identify(request: Request, user: models.User, session: models.Session)
 
     return json(user.to_dict())
 
-@login.post("/signup")
+@user.post("/new")
 @openapi.body(SignupBody)
 @openapi.response(status=200, content={"application/json": SignupResponse}, description="When an account is made")
 @validate(json=SignupBody, body_argument="params")
@@ -150,7 +150,7 @@ async def identify(request: Request, user: models.User, session: models.Session)
 async def new_user(request: Request, params: SignupBody, user: models.User, session: models.Session, user_facing_message: str):
     """
     Creates a new user.
-    Uses the same captcha as /login
+    Uses the same captcha as /user/login
     """
 
     if session.user:
