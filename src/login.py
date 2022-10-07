@@ -175,7 +175,7 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
             "message": "An account with this username already exists or you have provided invalid information."
         }, status=400)
 
-    await query_session.refresh(user)
+    #await query_session.refresh(user)
 
     #session.user = user
 
