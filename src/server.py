@@ -19,7 +19,7 @@ from sanic_ext.extensions.openapi import constants
 
 from classes import App, AppConfig, Request
 from chess_bp import chess_blueprint as chessBp
-from user import user
+from user_bp import user_bp
 from misc import misc
 
 import models
@@ -70,7 +70,7 @@ app.ext.openapi.add_security_scheme(
 )
 
 app.blueprint((
-    user,
+    user_bp,
     chessBp,
     misc
 ))
