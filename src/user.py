@@ -183,3 +183,16 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
         "accept": True,
         "message": user_facing_message
     })
+
+@user_bp.get("/stats")
+@has_session()
+async def user_stats(request: Request, params: SignupBody, user: models.User, session: models.Session):
+    """
+    Responds with statistics about the session or user using this endpoint.
+    """
+    return json({
+        "gamesPlayed": 100,
+        "gamesWon": 0,
+        "whitePercentage": 69,
+        "favouriteOpponent": "yourself"
+    })
