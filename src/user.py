@@ -186,7 +186,7 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
 
 @user_bp.get("/stats")
 @has_session()
-async def user_stats(request: Request, params: SignupBody, user: models.User, session: models.Session):
+async def user_stats(request: Request, user: models.User, session: models.Session):
     """
     Responds with statistics about the session or user using this endpoint.
     """
