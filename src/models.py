@@ -1,7 +1,7 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from typing import List, Optional, Union
+from typing import List, Optional, TypedDict, Union
 from email.headerregistry import Address
 from io import StringIO
 import hashlib
@@ -138,6 +138,17 @@ class User(BaseModel):
             "avatar_hash": self.get_avatar_hash(),
             "rank": self.score,
             "timeCreated": self.time_created.isoformat(),
+        }
+
+    def public_to_dict(self) -> classes.PublicChessEntityDict:
+        """
+        Like `to_dict` but public!
+        """
+        return {
+            "name": self.username,
+            "avatar_hash": self.get_avatar_hash(),
+            "rank": self.score,
+            "time_created": self.time_created.isoformat()
         }
 
 
@@ -344,3 +355,14 @@ class Session(Base):
         back_populates="session",
         lazy=_LAZYMETHOD
     )
+
+    def public_to_dict(self) -> classes.PublicChessEntityDict:
+        """
+        Like `to_dict` but public!
+        """
+        return {
+            "name": None,
+            "avatar_hash": None,
+            "rank": None,
+            "time_created": None
+        }

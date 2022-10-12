@@ -173,3 +173,30 @@ class SignupResponse:
     """
     accept: bool
     response: str
+
+class PublicChessEntity:
+    """
+    Information about users/sessions that everyone is entitled to know!
+    """
+    name: Optional[str]
+    avatar_hash: Optional[str]
+    rank: Optional[int]
+    time_created: Optional[str]
+
+class PublicChessEntityDict(TypedDict):
+    """
+    Information about users/sessions that everyone is entitled to know!
+    """
+    name: Optional[str]
+    avatar_hash: Optional[str]
+    rank: Optional[int]
+    time_created: Optional[str]
+
+class StatsResponse:
+    """
+    Contains statistics about a given user/session.
+    """
+    games_played: int
+    games_won: int
+    percentage_of_playing_white: int
+    favourite_opponent: PublicChessEntity

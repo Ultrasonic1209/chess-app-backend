@@ -18,7 +18,7 @@ from sqlalchemy import exc
 
 from auth import is_logged_in, has_session
 from captcha import validate_request_captcha
-from classes import Request, LoginBody, LoginResponse, SignupBody, SignupResponse
+from classes import Request, LoginBody, LoginResponse, SignupBody, SignupResponse, StatsResponse
 
 import models
 
@@ -185,14 +185,21 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
     })
 
 @user_bp.get("/stats")
+@openapi.response(status=200, content={"application/json": StatsResponse}, description="The requesting user/session's stats")
 @has_session()
 async def user_stats(request: Request, user: models.User, session: models.Session):
     """
     Responds with statistics about the session or user using this endpoint.
     """
+
+    games_played = 100
+    games_won = 0
+    percentage_white = 69
+    opponent = session.public_to_dict() if user is None else user.public_to_dict()
+
     return json({
-        "gamesPlayed": 100,
-        "gamesWon": 0,
-        "whitePercentage": 69,
-        "favouriteOpponent": "yourself"
+        "games_played": games_played,
+        "games_won": games_won,
+        "percentage_of_playing_white": percentage_white,
+        "favourite_opponent": opponent
     })
