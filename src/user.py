@@ -12,6 +12,7 @@ from sanic import Blueprint, json
 from sanic_ext import validate, openapi
 
 from sqlalchemy import select
+from sqlalchemy.sql.expression import Select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 from sqlalchemy import exc
@@ -192,8 +193,36 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
     Responds with statistics about the session or user using this endpoint.
     """
 
-    games_played = 100
-    games_won = 0
+    query_games: Select = select(models.Game)
+    query_games = query_games.distinct()
+
+    query_users_games: Select = select(models.Player.user_id).where(models.Player.user == user).where(models.Player.game_id == models.Game.game_id)
+    query_session_games: Select = select(models.Player.session_id).where(models.Player.session == session).where(models.Player.game_id == models.Game.game_id)
+
+    if user:
+        query_games = query_games.where(or_(
+            models.User.__table__.columns.user_id.in_(
+                query_users_games
+            ),
+            models.Session.__table__.columns.session_id.in_(
+                query_session_games
+            )
+        ))
+    else:
+        query_games = query_games.where(models.Session.__table__.columns.session_id.in_(
+            query_session_games
+        ))
+
+    query_session: AsyncSession = request.ctx.session
+
+    #print(stmt.compile(session.bind))
+
+    async with query_session.begin():
+        game_result: Result = await query_session.execute(query_games)
+        game_results = game_result.all()
+
+    games_played = len(game_results)
+    games_won = 1
     percentage_white = 69
     opponent = session.public_to_dict() if user is None else user.public_to_dict()
 
