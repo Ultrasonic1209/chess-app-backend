@@ -81,7 +81,7 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
 
     query_session = request.ctx.session
 
-    print(stmt.compile(query_session.bind))
+    #print(stmt.compile(query_session.bind))
 
     async with query_session.begin():
         game_result: Result = await query_session.execute(stmt)
