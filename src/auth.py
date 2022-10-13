@@ -15,7 +15,6 @@ import sanic
 
 from sqlalchemy import select
 from sqlalchemy.engine import Result
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Session
 from classes import Request, Token
@@ -31,8 +30,7 @@ def get_hostname(url, uri_type='netloc_only'):
 
 def check_token(request: Request) -> Optional[Token]:
     """
-    Check a token.
-    TODO figure out how it does that
+    Checks a token, returns a JWT if valid.
     """
 
     token = request.cookies.get(".CHECKMATESECRET")
@@ -62,14 +60,14 @@ async def authenticate_request(request: Request):
             if expiretime <= datetime.now():
                 return None, None
 
-        session: AsyncSession = request.ctx.session
+        query_session = request.ctx.session
 
         stmt = select(Session).where(
             Session.session == token.get("session")
         ).with_hint(Session, "USE INDEX (ix_Session_session)")
 
-        async with session.begin():
-            user_session_result: Result = await session.execute(stmt)
+        async with query_session.begin():
+            user_session_result: Result = await query_session.execute(stmt)
 
             user_session_row = user_session_result.first()
 
@@ -121,7 +119,7 @@ def has_session(create: bool = True):
                 if not create:
                     return text("No session?", status=401)
 
-                query_session: AsyncSession = request.ctx.session
+                query_session = request.ctx.session
 
                 async with query_session.begin():
                     session = Session()

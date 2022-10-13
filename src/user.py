@@ -43,7 +43,7 @@ async def do_login(request: Request, params: LoginBody, user_facing_message: str
             "message": "You are already logged in!"
         })
 
-    query_session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
     username = params.username
     password = params.password
@@ -115,7 +115,7 @@ async def do_logout(request: Request, user: models.User, session: models.Session
     """
     Removes JSON Web Token and destroys the session.
     """
-    query_session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
     if len(session.players) == 0:
 
@@ -160,7 +160,7 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
             "message": "Sign out before creating a new account."
         })
 
-    query_session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
     try:
         async with query_session.begin():
             user = models.User()
@@ -213,7 +213,7 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             query_session_games
         ))
 
-    query_session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
     #print(stmt.compile(session.bind))
 

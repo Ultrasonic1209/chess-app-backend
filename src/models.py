@@ -302,17 +302,18 @@ class Game(BaseModel):
         lazy=_LAZYMETHOD
     )
 
-    def to_dict(self) -> classes.PublicChessGame:
-        return {
-            "game_id": self.game_id,
-            "time_started": self.time_started.isoformat() if self.time_started else None,
-            "time_ended": self.time_ended.isoformat() if self.time_ended else None,
-            "white_won": self.white_won,
-            "players": [player.to_dict() for player in self.players],
-            "timer": self.timer.timer_name,
-            "time_limit": self.timeLimit,
-            "game": self.game
-        }
+    def to_dict(self):
+        # this is technically the more "correct" way to go around this it seems
+        return classes.PublicChessGame(
+            game_id=self.game_id,
+            time_started=self.time_started.isoformat() if self.time_started else None,
+            time_ended=self.time_ended.isoformat() if self.time_ended else None,
+            white_won=self.white_won,
+            players=[player.to_dict() for player in self.players],
+            timer=self.timer.timer_name,
+            time_limit=self.timeLimit,
+            game=self.game
+        )
 
 class Session(Base):
     """
@@ -328,7 +329,7 @@ class Session(Base):
         comment="Session ID"
     )
 
-    session = Column(
+    session: str = Column(
         String(255),
         primary_key=False,
         nullable=False,

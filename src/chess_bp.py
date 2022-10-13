@@ -17,7 +17,6 @@ from sanic_ext import validate, openapi
 import arrow
 
 from sqlalchemy.engine import Result
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 from sqlalchemy.sql.expression import Select
 
@@ -51,7 +50,10 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
     Lets users get a list of online games
     """
 
-    options = {item: value for (item, value) in request.query_args}
+    options = dict(request.query_args)
+
+    user_games: Select = select(models.Player.user_id).where(models.Player.user == user).where(models.Player.game_id == models.Game.game_id)
+    session_games: Select = select(models.Player.session_id).where(models.Player.session == session).where(models.Player.game_id == models.Game.game_id)
 
     stmt: Select = select(models.Game)
 
@@ -63,14 +65,10 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         if user:
             stmt = stmt.where(or_(
                 models.User.__table__.columns.user_id.in_(
-                    select(models.Player.user_id)
-                    .where(models.Player.user == user)
-                    .where(models.Player.game_id == models.Game.game_id)
+                    user_games
                 ),
                 models.Session.__table__.columns.session_id.in_(
-                    select(models.Player.session_id)
-                    .where(models.Player.session == session)
-                    .where(models.Player.game_id == models.Game.game_id)
+                    session_games
                 )
             ))
             # cartesian product here is unavoidable due to the or_ being present
@@ -78,17 +76,15 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
             # wouldnt want them losing control of their game!
         else:
             stmt = stmt.where(models.Session.__table__.columns.session_id.in_(
-                select(models.Player.session_id)
-                .where(models.Player.session == session)
-                .where(models.Player.game_id == models.Game.game_id)
+                session_games
             ))
 
-    session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
-    #print(stmt.compile(session.bind))
+    print(stmt.compile(query_session.bind))
 
-    async with session.begin():
-        game_result: Result = await session.execute(stmt)
+    async with query_session.begin():
+        game_result: Result = await query_session.execute(stmt)
         game_results = game_result.all()
 
     games: List[models.Game] = [game["Game"] for game in game_results]
@@ -102,11 +98,11 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         # not good for DRY but meh
         if game.game:
             chessgame = chess.pgn.read_game(StringIO(game.game))
-            if outcome := chessgame.end().board().outcome():
+            if (outcome := chessgame.end().board().outcome()) and (game.time_ended is None):
                 chessgame.headers["Result"] = outcome.result()
                 chessgame.headers["Termination"] = "normal"
 
-                async with session.begin():
+                async with query_session.begin():
                     game.time_ended = arrow.now()
                     game.white_won = outcome.winner
 
@@ -127,7 +123,7 @@ async def create_game(request: Request, options: NewChessGameOptions, user: mode
     """
     Creates a chess game in the database, being logged in is optional
     """
-    query_session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
     gtstmt = select(models.GameTimer).where(
         models.GameTimer.timer_name == ("Countdown" if options.countingDown else "Countup")
@@ -171,7 +167,7 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
     Retrieves game status
     """
 
-    query_session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
     async with query_session.begin():
         game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
@@ -213,7 +209,7 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
     """
     wants_white = bool(random.getrandbits(1)) if params.wantsWhite is None else params.wantsWhite
 
-    query_session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
     async with query_session.begin():
 
@@ -299,7 +295,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
     """
     lets players play!
     """
-    query_session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
     async with query_session.begin():
 

@@ -100,7 +100,7 @@ class PublicChessGame(TypedDict):
     """
 
     game_id: int
-    time_started: str
+    time_started: Optional[str]
     time_ended: Optional[str]
     white_won: Optional[bool]
     players: List[PublicChessPlayer]

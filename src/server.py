@@ -1,7 +1,6 @@
 """
 Contains the sanic app that should be run.
 """
-from contextvars import ContextVar
 import os
 from textwrap import dedent
 import re
@@ -79,7 +78,7 @@ sqlpass = os.getenv("SQL_PASSWORD", "")
 
 bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
-    echo=ISDEV,
+    echo=False,#ISDEV,
     pool_pre_ping=True,
 )
 
@@ -96,7 +95,7 @@ async def attach_httpx(_app: App, _):
     """
     _app.ctx.httpx = httpx.AsyncClient()
 
-_base_model_session_ctx = ContextVar("session")
+local_session = sessionmaker(bind, AsyncSession, expire_on_commit=False)
 
 @app.middleware("request")
 async def inject_session(request: Request):
@@ -104,8 +103,7 @@ async def inject_session(request: Request):
     Adds a SQL session to the request's context
     From https://sanic.dev/en/guide/how-to/orm.html#sqlalchemy
     """
-    request.ctx.session = sessionmaker(bind, AsyncSession, expire_on_commit=False)()
-    request.ctx.session_ctx_token = _base_model_session_ctx.set(request.ctx.session)
+    request.ctx.session = local_session()
 
 
 @app.middleware("response")
@@ -114,9 +112,8 @@ async def close_session(request: Request, response):
     Cleans the SQL session up
     From https://sanic.dev/en/guide/how-to/orm.html#sqlalchemy
     """
-    if hasattr(request.ctx, "session_ctx_token"):
-        _base_model_session_ctx.reset(request.ctx.session_ctx_token)
-        await request.ctx.session.close()
+    if session := getattr(request.ctx, "session"):
+        await session.close()
 
 @app.get("/sql")
 async def sql(request: Request):
@@ -124,10 +121,10 @@ async def sql(request: Request):
     lists all tables.
     TODO https://docs.sqlalchemy.org/en/14/tutorial/metadata.html
     """
-    session: AsyncSession = request.ctx.session
+    query_session = request.ctx.session
 
-    async with session.begin():
-        conn: AsyncConnection = await session.connection()
+    async with query_session.begin():
+        conn: AsyncConnection = await query_session.connection()
 
         tables = await conn.run_sync(
             lambda sync_conn: inspect(sync_conn).get_table_names()
@@ -152,9 +149,9 @@ async def sql_initalise(request: Request):
     if auth != "***REMOVED***":
         return text("hint: first name, capital S", status=401)
 
-    session: AsyncSession = request.ctx.session
-    async with session.begin():
-        conn: AsyncConnection = await session.connection()
+    query_session = request.ctx.session
+    async with query_session.begin():
+        conn: AsyncConnection = await query_session.connection()
 
         await conn.run_sync(models.Base.metadata.drop_all)
         await conn.run_sync(models.Base.metadata.create_all)
@@ -171,7 +168,7 @@ async def sql_initalise(request: Request):
         countdown = models.GameTimer()
         countdown.timer_name = "Countdown"
 
-        session.add_all([
+        query_session.add_all([
             user,
             countup,
             countdown
