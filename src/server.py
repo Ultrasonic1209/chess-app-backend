@@ -14,14 +14,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_e
 from sqlalchemy.orm import sessionmaker
 
 from sanic import json, text
+from sanic.worker.manager import WorkerManager
 from sanic_ext.extensions.openapi import constants
 
+import models
 from classes import App, AppConfig, Request
 from chess_bp import chess_blueprint as chessBp
 from user import user_bp
 from misc import misc
 
-import models
+WorkerManager.THRESHOLD = 100  # Value is in 0.1s
 
 load_dotenv()
 
@@ -47,7 +49,10 @@ app.extend(config=AppConfig(
     cors_supports_credentials=True,
     cors_allow_headers=["content-type"],
     cors_always_send=True,
-    cors_max_age=48
+    cors_max_age=48,
+
+    health=True,
+    logging=True
 ))
 
 app.ext.openapi.describe(
@@ -79,7 +84,6 @@ sqlpass = os.getenv("SQL_PASSWORD", "")
 bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
     echo=ISDEV,
-    pool_pre_ping=True,
     pool_recycle=3600
 )
 
@@ -202,7 +206,7 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=6969,
         fast=True,
-        auto_reload=(not ISDEV), # crashed my codespace
+        auto_reload=True,
         debug=ISDEV,
         access_log=ISDEV,
     )
