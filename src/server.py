@@ -80,6 +80,7 @@ bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
     echo=ISDEV,
     pool_pre_ping=True,
+    pool_recycle=3600
 )
 
 app.config.SECRET = os.getenv("JWT_SECRET", "")
