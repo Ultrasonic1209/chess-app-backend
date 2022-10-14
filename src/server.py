@@ -52,7 +52,7 @@ app.extend(config=AppConfig(
     cors_max_age=48,
 
     health=True,
-    logging=False
+    logging=True
 ))
 
 app.ext.openapi.describe(
