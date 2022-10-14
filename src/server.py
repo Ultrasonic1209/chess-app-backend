@@ -113,7 +113,7 @@ async def close_session(request: Request, response):
     Cleans the SQL session up
     From https://sanic.dev/en/guide/how-to/orm.html#sqlalchemy
     """
-    if session := getattr(request.ctx, "session"):
+    if session := getattr(request.ctx, "session", None):
         await session.close()
 
 @app.get("/sql")
