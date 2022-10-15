@@ -202,7 +202,7 @@ async def user_update(request: Request, user: models.User, session: models.Sessi
             return json({"message": "Incorrect password."}, status=401)
 
         if params.new_password:
-            await query_session.refresh(user, ["sessions"])
+            #await query_session.refresh(user, ["sessions"])
 
             user.password = params.new_password
             user.sessions = [session]

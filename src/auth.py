@@ -64,7 +64,7 @@ async def authenticate_request(request: Request):
 
         stmt = select(Session).where(
             Session.session == token.get("session")
-        ).with_hint(Session, "USE INDEX (ix_Session_session)")
+        ).with_hint(Session, "USE INDEX (ix_Session_session)").execution_options(populate_existing=True)
 
         async with query_session.begin():
             user_session_result: Result = await query_session.execute(stmt)
