@@ -217,11 +217,11 @@ async def user_update(request: Request, user: models.User, session: models.Sessi
             user.sessions = [session]
 
         if params.new_email:
-            try:
-                user.email = params.new_email
-            except email.errors.InvalidHeaderDefect:
-                await query_session.rollback()
-                return json({"message": "Invalid email."}, status=400)
+            #try:
+            user.email = params.new_email
+            #except email.errors.InvalidHeaderDefect:
+                #await query_session.rollback()
+                #return json({"message": "Invalid email."}, status=400)
 
     return json({"message": "Success!", "profile": user.to_dict()})
 
