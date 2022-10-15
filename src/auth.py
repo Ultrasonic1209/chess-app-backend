@@ -15,6 +15,7 @@ import sanic
 
 from sqlalchemy import select
 from sqlalchemy.engine import Result
+from sqlalchemy.orm import joinedload, subqueryload
 
 from models import Session
 from classes import Request, Token
@@ -64,7 +65,9 @@ async def authenticate_request(request: Request):
 
         stmt = select(Session).where(
             Session.session == token.get("session")
-        ).with_hint(Session, "USE INDEX (ix_Session_session)").execution_options(populate_existing=True)
+        ).with_hint(Session, "USE INDEX (ix_Session_session)").options(
+            joinedload(Session.user).subqueryload(Session.user.sessions)
+        )
 
         async with query_session.begin():
             user_session_result: Result = await query_session.execute(stmt)
