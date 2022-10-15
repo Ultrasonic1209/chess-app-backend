@@ -167,7 +167,14 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
 
             user.username = params.username
             user.password = params.password
-            user.email = params.email if params.email != "" else None
+
+            try:
+                user.email = params.email if params.email != "" else None
+            except email.errors.InvalidHeaderDefect:
+                return json({
+                    "accept": False,
+                    "message": "An invalid email was provided."
+                }, status=400)
 
             query_session.add(user)
     except exc.IntegrityError:
