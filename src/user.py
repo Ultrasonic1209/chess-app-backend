@@ -195,9 +195,9 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
 
 @user_bp.patch("/update")
 @openapi.body(UpdateBody)
-@openapi.response(status=200, content={"application/json": UpdateResponse})
+@openapi.response(status=200, content={"application/json": UpdateResponse}, description="User was updated sucessfully.")
 @openapi.response(status=400, content={"application/json": Message})
-@openapi.response(status=401, content={"application/json": Message})
+@openapi.response(status=401, content={"application/json": Message}, description="\"old_password\" was incorrect.")
 @validate(json=UpdateBody, body_argument="params")
 @is_logged_in()
 async def user_update(request: Request, user: models.User, session: models.Session, params: UpdateBody):
