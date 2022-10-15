@@ -69,12 +69,7 @@ async def authenticate_request(request: Request):
         async with query_session.begin():
             user_session_result: Result = await query_session.execute(stmt)
 
-            user_session_row = user_session_result.first()
-
-            if not user_session_row:
-                return None, None
-
-            user_session: Session = user_session_row["Session"]
+            user_session: Optional[Session] = user_session_result.scalar_one_or_none()
 
             user = user_session.user
 

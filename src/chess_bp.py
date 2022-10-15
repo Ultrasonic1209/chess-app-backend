@@ -133,12 +133,10 @@ async def create_game(request: Request, options: NewChessGameOptions, user: mode
 
         game_timer_result: Result = await query_session.execute(gtstmt)
 
-        game_timer_row = game_timer_result.first()
+        game_timer: Optional[models.GameTimer] = game_timer_result.scalar_one_or_none()
 
-        if not game_timer_row:
+        if not game_timer:
             return json({"message": "[SERVER ERROR] game type was not found"}, status=500)
-
-        game_timer: models.GameTimer = game_timer_row["GameTimer"]
 
         player = models.Player()
         player.is_white = options.creatorStartsWhite

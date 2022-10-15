@@ -5,6 +5,7 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 """
 
 from datetime import datetime, timedelta
+from typing import Optional
 
 import jwt
 
@@ -54,9 +55,9 @@ async def do_login(request: Request, params: LoginBody, user_facing_message: str
     async with query_session.begin():
         resp: Result = await query_session.execute(stmt)
 
-        row = resp.first()
+        user: Optional[models.User] = resp.scalar_one_or_none()
 
-        if row is None:
+        if user is None:
             # account not found
             return json(
                 {
@@ -64,8 +65,6 @@ async def do_login(request: Request, params: LoginBody, user_facing_message: str
                     "message": "Invalid username or password."
                 }
             )
-
-        user: models.User = row["User"]
 
         if user.password != password:
             # password incorrect
@@ -203,6 +202,8 @@ async def user_update(request: Request, user: models.User, session: models.Sessi
             return json({"message": "Incorrect password."}, status=401)
 
         if params.new_password:
+            await query_session.refresh(user, ["sessions"])
+
             user.password = params.new_password
             user.sessions = [session]
 
