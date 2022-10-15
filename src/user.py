@@ -13,13 +13,12 @@ from sanic_ext import validate, openapi
 
 from sqlalchemy import select
 from sqlalchemy.sql.expression import Select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 from sqlalchemy import exc
 
 from auth import is_logged_in, has_session
 from captcha import validate_request_captcha
-from classes import Request, LoginBody, LoginResponse, SignupBody, SignupResponse, StatsResponse
+from classes import Message, MessageWithAccept, Request, LoginBody, LoginResponse, SignupBody, SignupResponse, StatsResponse, UpdateBody, UpdateResponse
 
 import models
 
@@ -145,6 +144,7 @@ async def identify(request: Request, user: models.User, session: models.Session)
 @user_bp.post("/new")
 @openapi.body(SignupBody)
 @openapi.response(status=200, content={"application/json": SignupResponse}, description="When an account is made")
+@openapi.response(status=400, content={"application/json": MessageWithAccept})
 @validate(json=SignupBody, body_argument="params")
 @validate_request_captcha(success_facing_message="Please log into your new account.")
 @has_session()
@@ -184,6 +184,33 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
         "accept": True,
         "message": user_facing_message
     })
+
+@user_bp.patch("/update")
+@openapi.body(UpdateBody)
+@openapi.response(status=200, content={"application/json": UpdateResponse})
+@openapi.response(status=401, content={"application/json": Message})
+@validate(json=UpdateBody, body_argument="params")
+@is_logged_in()
+async def user_update(request: Request, user: models.User, session: models.Session, params: UpdateBody):
+    """
+    Updates user information.
+    """
+
+    query_session = request.ctx.session
+
+    async with query_session.begin():
+        if user.password != params.old_password:
+            return json({"message": "Incorrect password."}, status=401)
+
+        if params.new_password:
+            user.password = params.new_password
+            user.sessions = [session]
+
+        if params.new_email:
+            user.email = params.new_email
+
+    return json({"message": "Success!", "profile": user.to_dict()})
+
 
 @user_bp.get("/stats")
 @openapi.response(status=200, content={"application/json": StatsResponse}, description="The requesting user/session's stats")

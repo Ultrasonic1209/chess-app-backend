@@ -64,6 +64,14 @@ class Message:
 
     message: str
 
+class MessageWithAccept:
+    """
+    Message class but with Accept boolean.
+    """
+
+    accept: bool
+    message: str
+
 class LoginResponse:
     """
     Classes the response from /login
@@ -200,3 +208,20 @@ class StatsResponse:
     games_won: int
     percentage_of_playing_white: int
     favourite_opponent: PublicChessEntity
+
+@dataclass
+class UpdateBody:
+    """
+    Options that can be given for how you wish to update a user
+    """
+
+    old_password: str
+    new_password: Optional[str]
+    new_email: Optional[str]
+
+class UpdateResponse:
+    """
+    What the user will get when they update their user
+    """
+    message: str
+    profile: User
