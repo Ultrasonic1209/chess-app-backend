@@ -6,6 +6,7 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 
 from datetime import datetime, timedelta
 import email.errors
+from email.headerregistry import Address
 from typing import Optional
 
 import jwt
@@ -169,7 +170,7 @@ async def new_user(request: Request, params: SignupBody, user: models.User, sess
             user.password = params.password
 
             try:
-                user.email = params.email if params.email != "" else None
+                user.email = str(Address(addr_spec=params.email)) if params.email != "" else None
             except email.errors.InvalidHeaderDefect:
                 return json({
                     "accept": False,
@@ -217,11 +218,11 @@ async def user_update(request: Request, user: models.User, session: models.Sessi
             user.sessions = [session]
 
         if params.new_email:
-            #try:
-            user.email = params.new_email
-            #except email.errors.InvalidHeaderDefect:
-                #await query_session.rollback()
-                #return json({"message": "Invalid email."}, status=400)
+            try:
+                user.email = str(Address(addr_spec=params.new_email))
+            except email.errors.InvalidHeaderDefect:
+                await query_session.rollback()
+                return json({"message": "Invalid email."}, status=400)
 
     return json({"message": "Success!", "profile": user.to_dict()})
 

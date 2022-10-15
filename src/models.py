@@ -1,12 +1,10 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from typing import List, Optional, TypedDict, Union
+from typing import List, Optional, Union
 from email.headerregistry import Address
-from io import StringIO
 import hashlib
 
-import chess.pgn
 import arrow
 
 from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func
