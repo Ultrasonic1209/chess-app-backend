@@ -15,9 +15,9 @@ import sanic
 
 from sqlalchemy import select
 from sqlalchemy.engine import Result
-from sqlalchemy.orm import joinedload, subqueryload
+from sqlalchemy.orm import selectinload
 
-from models import Session
+from models import Session, User
 from classes import Request, Token
 
 def get_hostname(url, uri_type='netloc_only'):
@@ -66,7 +66,7 @@ async def authenticate_request(request: Request):
         stmt = select(Session).where(
             Session.session == token.get("session")
         ).with_hint(Session, "USE INDEX (ix_Session_session)").options(
-            joinedload(Session.user).subqueryload(Session.user.sessions)
+            selectinload(Session.user).selectinload(User.sessions)
         )
 
         async with query_session.begin():
