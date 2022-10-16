@@ -9,14 +9,14 @@ from classes import Request
 
 misc = Blueprint("misc", url_prefix="/misc")
 
+
 @misc.get("eyep")
 async def eyep(request: Request):
     """
     eyep
     """
-    return json({
-        "ip": request.remote_addr
-    })
+    return json({"ip": request.remote_addr})
+
 
 @misc.patch("update")
 async def git_update(request: Request):
@@ -39,13 +39,11 @@ async def git_update(request: Request):
     logger.warning(f"Update request from {request.remote_addr}")
 
     proc = await asyncio.create_subprocess_exec(
-        'git', 'pull',
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE)
+        "git", "pull", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
 
     await proc.communicate()
 
     return_code = proc.returncode
 
     return text(f"return code {return_code}")
-    

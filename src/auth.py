@@ -11,7 +11,8 @@ import jwt
 
 from sanic import text, json
 import sanic
-#from sanic.log import logger
+
+# from sanic.log import logger
 
 from sqlalchemy import select
 from sqlalchemy.engine import Result
@@ -20,14 +21,16 @@ from sqlalchemy.orm import selectinload
 from models import Session, User
 from classes import Request, Token
 
-def get_hostname(url, uri_type='netloc_only'):
+
+def get_hostname(url, uri_type="netloc_only"):
     """Get the host name from the url"""
     parsed_uri = urlparse(url)
-    if uri_type == 'both':
-        return '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
-    if uri_type == 'netloc_only':
+    if uri_type == "both":
+        return "{uri.scheme}://{uri.netloc}/".format(uri=parsed_uri)
+    if uri_type == "netloc_only":
         return parsed_uri.netloc
-    return ''
+    return ""
+
 
 def check_token(request: Request) -> Optional[Token]:
     """
@@ -40,12 +43,11 @@ def check_token(request: Request) -> Optional[Token]:
 
     try:
         return jwt.decode(
-            jwt=token,
-            key=request.app.config.SECRET,
-            algorithms=["HS256"]
+            jwt=token, key=request.app.config.SECRET, algorithms=["HS256"]
         )
     except jwt.exceptions.InvalidTokenError:
         return None
+
 
 async def authenticate_request(request: Request):
     """
@@ -63,10 +65,11 @@ async def authenticate_request(request: Request):
 
         query_session = request.ctx.session
 
-        stmt = select(Session).where(
-            Session.session == token.get("session")
-        ).with_hint(Session, "USE INDEX (ix_Session_session)").options(
-            selectinload(Session.user).selectinload(User.sessions)
+        stmt = (
+            select(Session)
+            .where(Session.session == token.get("session"))
+            .with_hint(Session, "USE INDEX (ix_Session_session)")
+            .options(selectinload(Session.user).selectinload(User.sessions))
         )
 
         async with query_session.begin():
@@ -80,17 +83,21 @@ async def authenticate_request(request: Request):
     else:
         return None, None
 
+
 def is_logged_in(silent: bool = False):
     """
     Ensures all requests to anything wrapped with this decorator are authenticated.
     """
+
     def decorator(func):
         @wraps(func)
         async def decorated_function(request: Request, *args, **kwargs):
             user, session = await authenticate_request(request=request)
 
             if user:
-                response = await func(request, *args, **kwargs, user=user, session=session)
+                response = await func(
+                    request, *args, **kwargs, user=user, session=session
+                )
                 return response
             else:
                 if silent:
@@ -102,12 +109,14 @@ def is_logged_in(silent: bool = False):
 
     return decorator
 
+
 def has_session(create: bool = True):
     """
     Ensures all requests to anything wrapped with this decorator has a session, creating one if necessary.
     Passes a user as well
     will set a cookie!
     """
+
     def decorator(func):
         @wraps(func)
         async def decorated_function(request: Request, *args, **kwargs):
@@ -127,28 +136,28 @@ def has_session(create: bool = True):
                 async with query_session.begin():
                     await query_session.refresh(session)
 
-                response: sanic.HTTPResponse = await func(request, *args, **kwargs, user=user, session=session)
+                response: sanic.HTTPResponse = await func(
+                    request, *args, **kwargs, user=user, session=session
+                )
 
                 async with query_session.begin():
                     await query_session.refresh(session)
 
-                payload = {
-                    'user_id': None,
-                    'session': session.session,
-                    'expires': None
-                }
+                payload = {"user_id": None, "session": session.session, "expires": None}
 
                 token = jwt.encode(payload, request.app.config.SECRET)
 
                 response.cookies[".CHECKMATESECRET"] = token
                 response.cookies[".CHECKMATESECRET"]["secure"] = True
                 response.cookies[".CHECKMATESECRET"]["samesite"] = "None"
-                #response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
+                # response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
                 response.cookies[".CHECKMATESECRET"]["comment"] = "aaaaaaa"
 
                 return response
             else:
-                response = await func(request, *args, **kwargs, user=user, session=session)
+                response = await func(
+                    request, *args, **kwargs, user=user, session=session
+                )
                 return response
 
         return decorated_function

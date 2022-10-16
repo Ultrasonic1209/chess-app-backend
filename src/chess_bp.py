@@ -11,7 +11,8 @@ import chess.pgn
 
 from sanic import Blueprint
 from sanic.response import json, empty
-#from sanic.log import logger
+
+# from sanic.log import logger
 from sanic_ext import validate, openapi
 
 import arrow
@@ -20,7 +21,17 @@ from sqlalchemy.engine import Result
 from sqlalchemy import select, or_
 from sqlalchemy.sql.expression import Select
 
-from classes import PublicChessGame, PublicChessGameResponse, Request, ChessEntry, NewChessGameResponse, NewChessGameOptions, Message, NewChessMove, GetGameOptions
+from classes import (
+    PublicChessGame,
+    PublicChessGameResponse,
+    Request,
+    ChessEntry,
+    NewChessGameResponse,
+    NewChessGameOptions,
+    Message,
+    NewChessMove,
+    GetGameOptions,
+)
 
 from auth import has_session
 
@@ -28,60 +39,79 @@ import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
+
 def get_player_team(game: models.Game, session: models.Session, user: models.User):
     """
     Checks if a user is already in a game.
     """
 
     for player in game.players:
-        if ((session is not None) and (session == player.session)) or ((user is not None) and (user == player.user)):
+        if ((session is not None) and (session == player.session)) or (
+            (user is not None) and (user == player.user)
+        ):
             return player.is_white
     return None
+
 
 @chess_blueprint.get("/get-games")
 @openapi.parameter("my_games", bool, required=True)
 @openapi.parameter("page_size", int, required=True)
 @openapi.parameter("page", int, required=True)
-@openapi.response(status=200, content={"application/json": List[PublicChessGameResponse]})
+@openapi.response(
+    status=200, content={"application/json": List[PublicChessGameResponse]}
+)
 @validate(query=GetGameOptions, query_argument="options")
 @has_session()
-async def get_games(request: Request, options: GetGameOptions, user: models.User, session: models.Session):
+async def get_games(
+    request: Request,
+    options: GetGameOptions,
+    user: models.User,
+    session: models.Session,
+):
     """
     Lets users get a list of online games
     """
 
     options = dict(request.query_args)
 
-    user_games: Select = select(models.Player.user_id).where(models.Player.user == user).where(models.Player.game_id == models.Game.game_id)
-    session_games: Select = select(models.Player.session_id).where(models.Player.session == session).where(models.Player.game_id == models.Game.game_id)
+    user_games: Select = (
+        select(models.Player.user_id)
+        .where(models.Player.user == user)
+        .where(models.Player.game_id == models.Game.game_id)
+    )
+    session_games: Select = (
+        select(models.Player.session_id)
+        .where(models.Player.session == session)
+        .where(models.Player.game_id == models.Game.game_id)
+    )
 
     stmt: Select = select(models.Game)
 
-    stmt = stmt.limit(int(options["page_size"])).offset(int(options["page"]) * int(options["page_size"]))
+    stmt = stmt.limit(int(options["page_size"])).offset(
+        int(options["page"]) * int(options["page_size"])
+    )
 
     stmt = stmt.distinct()
 
     if bool(strtobool(options["my_games"])) is True:
         if user:
-            stmt = stmt.where(or_(
-                models.User.__table__.columns.user_id.in_(
-                    user_games
-                ),
-                models.Session.__table__.columns.session_id.in_(
-                    session_games
+            stmt = stmt.where(
+                or_(
+                    models.User.__table__.columns.user_id.in_(user_games),
+                    models.Session.__table__.columns.session_id.in_(session_games),
                 )
-            ))
+            )
             # cartesian product here is unavoidable due to the or_ being present
             # we need the secondary check for session incase someone logs in whilst having unregistered games
             # wouldnt want them losing control of their game!
         else:
-            stmt = stmt.where(models.Session.__table__.columns.session_id.in_(
-                session_games
-            ))
+            stmt = stmt.where(
+                models.Session.__table__.columns.session_id.in_(session_games)
+            )
 
     query_session = request.ctx.session
 
-    #print(stmt.compile(query_session.bind))
+    # print(stmt.compile(query_session.bind))
 
     async with query_session.begin():
         game_result: Result = await query_session.execute(stmt)
@@ -98,7 +128,9 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
         # not good for DRY but meh
         if game.game:
             chessgame = chess.pgn.read_game(StringIO(game.game))
-            if (outcome := chessgame.end().board().outcome()) and (game.time_ended is None):
+            if (outcome := chessgame.end().board().outcome()) and (
+                game.time_ended is None
+            ):
                 chessgame.headers["Result"] = outcome.result()
                 chessgame.headers["Termination"] = "normal"
 
@@ -119,14 +151,20 @@ async def get_games(request: Request, options: GetGameOptions, user: models.User
 @openapi.response(status=201, content={"application/json": NewChessGameResponse})
 @validate(json=NewChessGameOptions, body_argument="options")
 @has_session()
-async def create_game(request: Request, options: NewChessGameOptions, user: models.User, session: models.Session):
+async def create_game(
+    request: Request,
+    options: NewChessGameOptions,
+    user: models.User,
+    session: models.Session,
+):
     """
     Creates a chess game in the database, being logged in is optional
     """
     query_session = request.ctx.session
 
     gtstmt = select(models.GameTimer).where(
-        models.GameTimer.timer_name == ("Countdown" if options.countingDown else "Countup")
+        models.GameTimer.timer_name
+        == ("Countdown" if options.countingDown else "Countup")
     )
 
     async with query_session.begin():
@@ -136,7 +174,9 @@ async def create_game(request: Request, options: NewChessGameOptions, user: mode
         game_timer: Optional[models.GameTimer] = game_timer_result.scalar_one_or_none()
 
         if not game_timer:
-            return json({"message": "[SERVER ERROR] game type was not found"}, status=500)
+            return json(
+                {"message": "[SERVER ERROR] game type was not found"}, status=500
+            )
 
         player = models.Player()
         player.is_white = options.creatorStartsWhite
@@ -156,11 +196,14 @@ async def create_game(request: Request, options: NewChessGameOptions, user: mode
 
     return response
 
+
 @chess_blueprint.get("/game/<gameid:int>")
 @openapi.response(status=404, content={"application/json": Message})
 @openapi.response(status=200, content={"application/json": PublicChessGameResponse})
 @has_session()
-async def get_game(request: Request, gameid: int, user: models.User, session: models.Session):
+async def get_game(
+    request: Request, gameid: int, user: models.User, session: models.Session
+):
     """
     Retrieves game status
     """
@@ -168,7 +211,9 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
     query_session = request.ctx.session
 
     async with query_session.begin():
-        game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
+        game: Optional[models.Game] = await query_session.get(
+            models.Game, gameid, populate_existing=True
+        )
 
         if game is None:
             return json({"message": "game does not exist"}, status=404)
@@ -186,7 +231,6 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
                 game.time_ended = arrow.now()
                 game.white_won = outcome.winner
 
-
     gamedict: PublicChessGameResponse = game.to_dict()
 
     gamedict["is_white"] = is_white
@@ -201,17 +245,27 @@ async def get_game(request: Request, gameid: int, user: models.User, session: mo
 @openapi.response(status=404, content={"application/json": Message})
 @validate(json=ChessEntry, body_argument="params")
 @has_session()
-async def enter_game(request: Request, gameid: int, params: ChessEntry, user: models.User, session: models.Session):
+async def enter_game(
+    request: Request,
+    gameid: int,
+    params: ChessEntry,
+    user: models.User,
+    session: models.Session,
+):
     """
     If someone wants to enter a game, they need only use this endpoint.
     """
-    wants_white = bool(random.getrandbits(1)) if params.wantsWhite is None else params.wantsWhite
+    wants_white = (
+        bool(random.getrandbits(1)) if params.wantsWhite is None else params.wantsWhite
+    )
 
     query_session = request.ctx.session
 
     async with query_session.begin():
 
-        game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
+        game: Optional[models.Game] = await query_session.get(
+            models.Game, gameid, populate_existing=True
+        )
 
         if game is None:
             return json({"message": "game does not exist"}, status=404)
@@ -252,44 +306,57 @@ async def enter_game(request: Request, gameid: int, params: ChessEntry, user: mo
                 else:
                     black = player
 
-            pgn = chess.pgn.Game({
-                "Event": "Checkmate Chess Game",
-                "Site": "chessapp.ultras-playroom.xyz",
-                "Date": time.strftime(r"%Y.%m.%d"),
-                "Round": 1,
-                "White": white.user.username if white.user else "Anonymous",
-                "Black": black.user.username if black.user else "Anonymous",
-                "Result": "*",
+            pgn = chess.pgn.Game(
+                {
+                    "Event": "Checkmate Chess Game",
+                    "Site": "chessapp.ultras-playroom.xyz",
+                    "Date": time.strftime(r"%Y.%m.%d"),
+                    "Round": 1,
+                    "White": white.user.username if white.user else "Anonymous",
+                    "Black": black.user.username if black.user else "Anonymous",
+                    "Result": "*",
+                    # "Annotator": "Checkmate",
+                    # PlyCount
+                    # TimeControl
+                    "Time": time.strftime(r"%H:%M:%S"),
+                    "Termination": "unterminated",
+                    "Mode": "ICS",
+                    # FEN
+                }
+            )
 
-                #"Annotator": "Checkmate",
-                #PlyCount
-                #TimeControl
-                "Time": time.strftime(r"%H:%M:%S"),
-                "Termination": "unterminated",
-                "Mode": "ICS",
-                #FEN
-            })
-
-            exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+            exporter = chess.pgn.StringExporter(
+                headers=True, variations=True, comments=True
+            )
             pgn_string = pgn.accept(exporter)
 
             game.time_started = time
             game.game = pgn_string
 
-
     response = empty()
 
     return response
 
+
 @chess_blueprint.patch("/game/<gameid:int>/move")
 @openapi.body(NewChessMove)
-@openapi.response(status=200, content={"application/json": PublicChessGameResponse}, description="The updated chess game")
+@openapi.response(
+    status=200,
+    content={"application/json": PublicChessGameResponse},
+    description="The updated chess game",
+)
 @openapi.response(status=400, content={"application/json": Message})
 @openapi.response(status=401, content={"application/json": Message})
 @openapi.response(status=404, content={"application/json": Message})
 @validate(json=NewChessMove, body_argument="params")
 @has_session(create=False)
-async def make_move(request: Request, gameid: int, params: NewChessMove, user: models.User, session: models.Session):
+async def make_move(
+    request: Request,
+    gameid: int,
+    params: NewChessMove,
+    user: models.User,
+    session: models.Session,
+):
     """
     lets players play!
     """
@@ -297,7 +364,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
 
     async with query_session.begin():
 
-        game: Optional[models.Game] = await query_session.get(models.Game, gameid, populate_existing=True)
+        game: Optional[models.Game] = await query_session.get(
+            models.Game, gameid, populate_existing=True
+        )
 
         if game is None:
             return json({"message": "game does not exist"}, status=404)
@@ -355,7 +424,7 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             white = game.timeLimit - white
             black = game.timeLimit - black
 
-            #if len(times) == 0:
+            # if len(times) == 0:
             #    white = game.timeLimit
             #    black = game.timeLimit
 
@@ -368,7 +437,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
                 chessgame.headers["Result"] = "0-1"
                 chessgame.headers["Termination"] = "time forefit"
 
-                exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+                exporter = chess.pgn.StringExporter(
+                    headers=True, variations=True, comments=True
+                )
 
                 pgn_string = chessgame.accept(exporter)
 
@@ -381,7 +452,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
                 chessgame.headers["Result"] = "1-0"
                 chessgame.headers["Termination"] = "time forefit"
 
-                exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+                exporter = chess.pgn.StringExporter(
+                    headers=True, variations=True, comments=True
+                )
 
                 pgn_string = chessgame.accept(exporter)
 
@@ -394,11 +467,10 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             chessgame.end().add_line([move])
             chessgame.end().set_clock((game.timeLimit * 2) - seconds_since_start)
 
-            #return json({"message": f"white has {white} seconds remaining\nblack has {black} seconds remaining"}, status=501)
+            # return json({"message": f"white has {white} seconds remaining\nblack has {black} seconds remaining"}, status=501)
         else:
             chessgame.end().add_line([move])
             chessgame.end().set_clock(seconds_since_start)
-
 
         # not good for DRY but meh
         if outcome := chessgame.end().board().outcome():
@@ -408,7 +480,9 @@ async def make_move(request: Request, gameid: int, params: NewChessMove, user: m
             game.time_ended = arrow.now()
             game.white_won = outcome.winner
 
-        exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+        exporter = chess.pgn.StringExporter(
+            headers=True, variations=True, comments=True
+        )
 
         pgn_string = chessgame.accept(exporter)
 

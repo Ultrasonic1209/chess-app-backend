@@ -23,6 +23,7 @@ Base = declarative_base()
 
 _LAZYMETHOD = "selectin"
 
+
 def censor_email(email: Optional[str] = None):
     """
     Takes an email and censors all but the domain and the first few digits of the name.
@@ -34,13 +35,15 @@ def censor_email(email: Optional[str] = None):
 
     username = address.username
 
-    exposedlength = min(3, len(username)-1)
+    exposedlength = min(3, len(username) - 1)
 
     username = username[:exposedlength] + ("*" * (len(username) - exposedlength))
 
     return str(Address(username=username, domain=address.domain))
 
+
 ANONYMOUS_IMG = "https://dev.chessapp.ultras-playroom.xyz/maskable_icon.png"
+
 
 def hash_email(email: Union[str, None]):
     """
@@ -50,6 +53,7 @@ def hash_email(email: Union[str, None]):
         email = ""
     email = email.strip().lower().encode("utf-8")
     return hashlib.md5(email).hexdigest()
+
 
 class BaseModel(Base):
     """
@@ -63,6 +67,7 @@ class BaseModel(Base):
         Converts the model from an SQL object to a Python dictionary.
         """
         return {}
+
 
 class User(BaseModel):
     """
@@ -78,56 +83,29 @@ class User(BaseModel):
         if self.email:
             return hash_email(self.email)
 
-    user_id: int = Column(
-        INTEGER(unsigned=True),
-        primary_key=True,
-        comment="User ID"
-    )
+    user_id: int = Column(INTEGER(unsigned=True), primary_key=True, comment="User ID")
 
-    username: str = Column(
-        String(63),
-        nullable=False,
-        unique=True,
-        comment="Username"
-
-    )
+    username: str = Column(String(63), nullable=False, unique=True, comment="Username")
     password = Column(
-        PasswordType(schemes=["pbkdf2_sha512"]),
-        nullable=False,
-        comment="Password"
+        PasswordType(schemes=["pbkdf2_sha512"]), nullable=False, comment="Password"
     )
 
     score = Column(
-        INTEGER(unsigned=True),
-        nullable=False,
-        default=400,
-        comment="Player score"
+        INTEGER(unsigned=True), nullable=False, default=400, comment="Player score"
     )
 
-    email: str = Column(
-        EmailType(length=127),
-        nullable=True,
-        comment="Email address"
-    )
+    email: str = Column(EmailType(length=127), nullable=True, comment="Email address")
 
     time_created: arrow.Arrow = Column(
         ArrowType,
         nullable=False,
         server_default=func.now(),
-        comment="Account creation timestamp"
+        comment="Account creation timestamp",
     )
 
-    players = relationship(
-        "Player",
-        back_populates="user",
-        lazy=_LAZYMETHOD
-    )
+    players = relationship("Player", back_populates="user", lazy=_LAZYMETHOD)
 
-    sessions = relationship(
-        "Session",
-        back_populates="user",
-        lazy=_LAZYMETHOD
-    )
+    sessions = relationship("Session", back_populates="user", lazy=_LAZYMETHOD)
 
     def to_dict(self):
         return {
@@ -146,7 +124,7 @@ class User(BaseModel):
             "name": self.username,
             "avatar_hash": self.get_avatar_hash(),
             "rank": self.score,
-            "time_created": self.time_created.isoformat()
+            "time_created": self.time_created.isoformat(),
         }
 
 
@@ -156,7 +134,6 @@ class Player(BaseModel):
     """
 
     __tablename__ = "Player"
-
 
     def get_avatar_hash(self):
         """
@@ -168,33 +145,26 @@ class Player(BaseModel):
         ForeignKey("Game.game_id"),
         nullable=False,
         primary_key=True,
-        comment="Linked Game ID"
+        comment="Linked Game ID",
     )
 
     is_white = Column(
         BOOLEAN(),
         nullable=False,
         primary_key=True,
-        comment="Flags the player's colour."
+        comment="Flags the player's colour.",
     )
 
     user_id = Column(
-        ForeignKey("User.user_id"),
-        nullable=True,
-        comment="Linked User ID"
+        ForeignKey("User.user_id"), nullable=True, comment="Linked User ID"
     )
 
     session_id = Column(
-        ForeignKey("Session.session_id"),
-        nullable=True,
-        comment="Linked Session ID"
+        ForeignKey("Session.session_id"), nullable=True, comment="Linked Session ID"
     )
 
     user: Optional[User] = relationship(
-        "User",
-        back_populates="players",
-        uselist=False,
-        lazy=_LAZYMETHOD
+        "User", back_populates="players", uselist=False, lazy=_LAZYMETHOD
     )
 
     game = relationship(
@@ -204,11 +174,7 @@ class Player(BaseModel):
         lazy=_LAZYMETHOD,
     )
 
-    session = relationship(
-        "Session",
-        uselist=False,
-        lazy=_LAZYMETHOD
-    )
+    session = relationship("Session", uselist=False, lazy=_LAZYMETHOD)
 
     def to_dict(self) -> classes.PublicChessPlayer:
         return {
@@ -217,8 +183,9 @@ class Player(BaseModel):
             "game_id": self.game_id,
             "is_white": self.is_white,
             "rank": self.user.score if self.user else None,
-            "avatar_hash": self.get_avatar_hash()
+            "avatar_hash": self.get_avatar_hash(),
         }
+
 
 class GameTimer(BaseModel):
     """
@@ -228,17 +195,11 @@ class GameTimer(BaseModel):
 
     __tablename__ = "GameTimer"
 
-    timer_id = Column(
-        INTEGER(unsigned=True),
-        primary_key=True,
-        comment="Timer ID"
-    )
+    timer_id = Column(INTEGER(unsigned=True), primary_key=True, comment="Timer ID")
 
-    timer_name = Column(
-        String(15),
-        nullable=False,
-        comment="Timer Name"
-    )
+    timer_name = Column(String(15), nullable=False, comment="Timer Name")
+
+
 class Game(BaseModel):
     """
     Each chess game has one game. (lol)
@@ -246,58 +207,40 @@ class Game(BaseModel):
 
     __tablename__ = "Game"
 
-    game_id = Column(
-        INTEGER(unsigned=True),
-        primary_key=True,
-        comment="Game ID"
-    )
+    game_id = Column(INTEGER(unsigned=True), primary_key=True, comment="Game ID")
 
     game = Column(
         String(8192),
         nullable=True,
-        comment="Holds game metadata and a list of moves made"
+        comment="Holds game metadata and a list of moves made",
     )
 
     time_started: Optional[arrow.Arrow] = Column(
-        ArrowType,
-        nullable=True,
-        comment="Game start timestamp"
+        ArrowType, nullable=True, comment="Game start timestamp"
     )
 
     time_ended: Optional[arrow.Arrow] = Column(
-        ArrowType,
-        nullable=True,
-        comment="Game end timestamp"
+        ArrowType, nullable=True, comment="Game end timestamp"
     )
 
     white_won = Column(
-        BOOLEAN(),
-        nullable=True,
-        comment="Whether the player playing white won or not"
+        BOOLEAN(), nullable=True, comment="Whether the player playing white won or not"
     )
 
     timer_id = Column(
-        ForeignKey("GameTimer.timer_id"),
-        nullable=False,
-        comment="The game's timer ID"
+        ForeignKey("GameTimer.timer_id"), nullable=False, comment="The game's timer ID"
     )
 
     timeLimit: int = Column(
         INTEGER(unsigned=True),
         nullable=True,
-        comment="The amount of time each player gets"
+        comment="The amount of time each player gets",
     )
 
-    timer: GameTimer = relationship(
-        "GameTimer",
-        uselist=False,
-        lazy=_LAZYMETHOD
-        )
+    timer: GameTimer = relationship("GameTimer", uselist=False, lazy=_LAZYMETHOD)
 
     players: List[Player] = relationship(
-        "Player",
-        back_populates="game",
-        lazy=_LAZYMETHOD
+        "Player", back_populates="game", lazy=_LAZYMETHOD
     )
 
     def to_dict(self):
@@ -310,8 +253,9 @@ class Game(BaseModel):
             players=[player.to_dict() for player in self.players],
             timer=self.timer.timer_name,
             time_limit=self.timeLimit,
-            game=self.game
+            game=self.game,
         )
+
 
 class Session(Base):
     """
@@ -321,10 +265,7 @@ class Session(Base):
     __tablename__ = "Session"
 
     session_id = Column(
-        INTEGER(unsigned=True),
-        nullable=False,
-        primary_key=True,
-        comment="Session ID"
+        INTEGER(unsigned=True), nullable=False, primary_key=True, comment="Session ID"
     )
 
     session: str = Column(
@@ -333,35 +274,21 @@ class Session(Base):
         nullable=False,
         unique=True,
         index=True,
-        comment="Session Token (Password for machines)"
+        comment="Session Token (Password for machines)",
     )
 
     user_id = Column(
-        ForeignKey("User.user_id"),
-        nullable=True,
-        comment="Linked User ID"
+        ForeignKey("User.user_id"), nullable=True, comment="Linked User ID"
     )
 
     user: Optional[User] = relationship(
-        "User",
-        back_populates="sessions",
-        uselist=False,
-        lazy=_LAZYMETHOD
+        "User", back_populates="sessions", uselist=False, lazy=_LAZYMETHOD
     )
 
-    players = relationship(
-        "Player",
-        back_populates="session",
-        lazy=_LAZYMETHOD
-    )
+    players = relationship("Player", back_populates="session", lazy=_LAZYMETHOD)
 
     def public_to_dict(self) -> classes.PublicChessEntityDict:
         """
         Like `to_dict` but public!
         """
-        return {
-            "name": None,
-            "avatar_hash": None,
-            "rank": None,
-            "time_created": None
-        }
+        return {"name": None, "avatar_hash": None, "rank": None, "time_created": None}

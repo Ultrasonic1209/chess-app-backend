@@ -34,26 +34,34 @@ sha = repo.head.object.hexsha
 
 app = App("CheckmateBackend")
 
-app.extend(config=AppConfig(
-    oas=True,
-    oas_autodoc=True,
-    oas_ui_default="swagger",
-    swagger_ui_configuration={"apisSorter": "alpha", "operationsSorter": "alpha", "docExpansion": "list"},
-
-    cors_origins=[
-        re.compile(r"^https://(.*)ultras-playroom\.xyz"), # main domain
-        re.compile(r"https://chess-app-frontend-?(.*)-ultrasonic1209\.vercel\.app"), # vercel previews
-        re.compile(r"https://tauri\.localhost"), # tauri demo
-        re.compile(r"https://ultrasonic1209-(.*)\.githubpreview\.dev") # gh codespace web previews
-    ], # re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)")
-    cors_supports_credentials=True,
-    cors_allow_headers=["content-type"],
-    cors_always_send=True,
-    cors_max_age=48,
-
-    health=True,
-    logging=False
-))
+app.extend(
+    config=AppConfig(
+        oas=True,
+        oas_autodoc=True,
+        oas_ui_default="swagger",
+        swagger_ui_configuration={
+            "apisSorter": "alpha",
+            "operationsSorter": "alpha",
+            "docExpansion": "list",
+        },
+        cors_origins=[
+            re.compile(r"^https://(.*)ultras-playroom\.xyz"),  # main domain
+            re.compile(
+                r"https://chess-app-frontend-?(.*)-ultrasonic1209\.vercel\.app"
+            ),  # vercel previews
+            re.compile(r"https://tauri\.localhost"),  # tauri demo
+            re.compile(
+                r"https://ultrasonic1209-(.*)\.githubpreview\.dev"
+            ),  # gh codespace web previews
+        ],  # re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)")
+        cors_supports_credentials=True,
+        cors_allow_headers=["content-type"],
+        cors_always_send=True,
+        cors_max_age=48,
+        health=True,
+        logging=False,
+    )
+)
 
 app.ext.openapi.describe(
     title="Checkmate API",
@@ -70,21 +78,17 @@ app.ext.openapi.add_security_scheme(
     name=".CHECKMATESECRET",
     type=constants.SecuritySchemeType.API_KEY,
     location=constants.SecuritySchemeLocation.COOKIE,
-    description="JWT containing user id, secret, and expiry"
+    description="JWT containing user id, secret, and expiry",
 )
 
-app.blueprint((
-    user_bp,
-    chessBp,
-    misc
-))
+app.blueprint((user_bp, chessBp, misc))
 
 sqlpass = os.getenv("SQL_PASSWORD", "")
 
 bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
     echo=ISDEV,
-    pool_recycle=3600
+    pool_recycle=3600,
 )
 
 app.config.SECRET = os.getenv("JWT_SECRET", "")
@@ -93,14 +97,17 @@ app.config.FC_SECRET = os.getenv("FRIENDLY_CAPTCHA_SECRET", "")
 if not ISDEV:
     app.config.FORWARDED_SECRET = os.getenv("FORWARDED_SECRET", "")
 
+
 @app.before_server_start
 async def attach_httpx(_app: App, _):
-    """"
+    """ "
     Attaches a HTTPX client to the server to make requests with
     """
     _app.ctx.httpx = httpx.AsyncClient()
 
+
 local_session = sessionmaker(bind, AsyncSession, expire_on_commit=False)
+
 
 @app.middleware("request")
 async def inject_session(request: Request):
@@ -120,6 +127,7 @@ async def close_session(request: Request, response):
     if session := getattr(request.ctx, "session", None):
         await session.close()
 
+
 @app.get("/sql")
 async def sql(request: Request):
     """
@@ -135,6 +143,7 @@ async def sql(request: Request):
             lambda sync_conn: inspect(sync_conn).get_table_names()
         )
     return json(tables)
+
 
 @app.patch("/sql/initalise")
 async def sql_initalise(request: Request):
@@ -173,15 +182,12 @@ async def sql_initalise(request: Request):
         countdown = models.GameTimer()
         countdown.timer_name = "Countdown"
 
-        query_session.add_all([
-            user,
-            countup,
-            countdown
-        ])
+        query_session.add_all([user, countup, countdown])
 
     assert user.password == "ha"
 
     return text("done!")
+
 
 @app.get("/")
 async def index(request: Request):
@@ -198,12 +204,13 @@ async def index(request: Request):
 
     return text(resp)
 
-app.static('/static', './static')
+
+app.static("/static", "./static")
 app.static("/favicon.ico", "./static/favicon.ico", name="favicon")
 
-if __name__ == '__main__':
-    app.run( # app.make_coffee is also a thing somehow lol
-        host='0.0.0.0',
+if __name__ == "__main__":
+    app.run(  # app.make_coffee is also a thing somehow lol
+        host="0.0.0.0",
         port=6969,
         fast=True,
         auto_reload=True,
