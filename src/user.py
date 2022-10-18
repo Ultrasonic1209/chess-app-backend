@@ -7,6 +7,7 @@ https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pa
 from datetime import datetime, timedelta
 import email.errors
 from email.headerregistry import Address
+from statistics import mode
 from typing import List, Optional
 
 import jwt
@@ -266,6 +267,30 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
     Responds with statistics about the session or user using this endpoint.
     """
 
+    def get_player(game: models.Game):
+        """
+        Returns the user's player in this game.
+        """
+        return next(
+                filter(
+                    lambda player: (player.user_id == user.user_id)
+                    or (player.session_id == session.session_id),
+                    game.players,
+                ), None
+        )
+
+    def get_opponent(game: models.Game):
+        """
+        Returns the opposing user's player in this game.
+        """
+        return next(
+                filter(
+                    lambda player: (player.user_id != user.user_id)
+                    and (player.session_id != session.session_id),
+                    game.players,
+                ), None
+        )
+
     query_games: Select = select(models.Game)
     query_games = query_games.distinct()
 
@@ -306,38 +331,28 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
     # I wish you a very good day.
     games_played_black = list(
         filter(
-            lambda game: next(
-                filter(
-                    lambda player: (player.user_id == user.user_id)
-                    or (player.session_id == session.session_id),
-                    game.players,
-                )
-            ).is_white
+            lambda game: get_player(game).is_white
             is False,
             game_results,
         )
     )
     games_played_white = list(
         filter(
-            lambda game: next(
-                filter(
-                    lambda player: (player.user_id == user.user_id)
-                    or (player.session_id == session.session_id),
-                    game.players,
-                )
-            ).is_white
+            lambda game: get_player(game).is_white
             is True,
             game_results,
         )
     )
 
-    opponent = session.public_to_dict() if user is None else user.public_to_dict()
+    opponents = tuple(filter(None, (get_opponent(game) for game in game_results)))
+
+    opponent = mode(opponents)
 
     return json(
         {
             "games_played": games_played,
             "games_won": games_won,
             "percentage_of_playing_white": len(games_played_white) / games_played * 100,
-            "favourite_opponent": opponent,
+            "favourite_opponent": opponent.user.public_to_dict() if opponent.user else opponent.session.public_to_dict(),
         }
     )
