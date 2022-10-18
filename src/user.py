@@ -273,7 +273,7 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         """
         return next(
             filter(
-                lambda player: (player.user_id == user.user_id)
+                lambda player: (player.user_id == (user.user_id if user else -1))
                 or (player.session_id == session.session_id),
                 game.players,
             ),
@@ -286,7 +286,7 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         """
         return next(
             filter(
-                lambda player: (player.user_id != user.user_id)
+                lambda player: (player.user_id != (user.user_id if user else -1))
                 and (player.session_id != session.session_id),
                 game.players,
             ),
