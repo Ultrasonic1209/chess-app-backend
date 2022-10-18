@@ -120,12 +120,12 @@ class User(BaseModel):
         """
         Like `to_dict` but public!
         """
-        return {
-            "name": self.username,
-            "avatar_hash": self.get_avatar_hash(),
-            "rank": self.score,
-            "time_created": self.time_created.isoformat(),
-        }
+        return classes.PublicChessEntityDict(
+            name = self.username,
+            avatar_hash = self.get_avatar_hash(),
+            rank = self.score,
+            time_created = self.time_created.isoformat(),
+        )
 
 
 class Session(Base):
@@ -162,7 +162,12 @@ class Session(Base):
         """
         Like `to_dict` but public!
         """
-        return {"name": None, "avatar_hash": None, "rank": None, "time_created": None}
+        return classes.PublicChessEntityDict(
+            name=None,
+            avatar_hash=None,
+            rank=None,
+            time_created=None
+        )
 
 class Player(BaseModel):
     """
@@ -221,6 +226,9 @@ class Player(BaseModel):
             "rank": self.user.score if self.user else None,
             "avatar_hash": self.get_avatar_hash(),
         }
+
+    def to_dict_generalised(self):
+        return self.user.public_to_dict() if self.user else self.session.public_to_dict()
 
 
 class GameTimer(BaseModel):

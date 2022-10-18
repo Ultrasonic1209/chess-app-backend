@@ -244,7 +244,7 @@ class StatsResponse:
     games_played: int
     games_won: int
     percentage_of_playing_white: int
-    favourite_opponent: PublicChessEntity
+    favourite_opponent: Optional[PublicChessEntity]
 
 
 @dataclass
