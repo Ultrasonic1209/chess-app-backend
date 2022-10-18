@@ -128,6 +128,42 @@ class User(BaseModel):
         }
 
 
+class Session(Base):
+    """
+    For unregistered players to be able to play online games.
+    """
+
+    __tablename__ = "Session"
+
+    session_id = Column(
+        INTEGER(unsigned=True), nullable=False, primary_key=True, comment="Session ID"
+    )
+
+    session: str = Column(
+        String(255),
+        primary_key=False,
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Session Token (Password for machines)",
+    )
+
+    user_id = Column(
+        ForeignKey("User.user_id"), nullable=True, comment="Linked User ID"
+    )
+
+    user: Optional[User] = relationship(
+        "User", back_populates="sessions", uselist=False, lazy=_LAZYMETHOD
+    )
+
+    players = relationship("Player", back_populates="session", lazy=_LAZYMETHOD)
+
+    def public_to_dict(self) -> classes.PublicChessEntityDict:
+        """
+        Like `to_dict` but public!
+        """
+        return {"name": None, "avatar_hash": None, "rank": None, "time_created": None}
+
 class Player(BaseModel):
     """
     Each chess game has two players.
@@ -174,7 +210,7 @@ class Player(BaseModel):
         lazy=_LAZYMETHOD,
     )
 
-    session = relationship("Session", uselist=False, lazy=_LAZYMETHOD)
+    session: Session = relationship("Session", uselist=False, lazy=_LAZYMETHOD)
 
     def to_dict(self) -> classes.PublicChessPlayer:
         return {
@@ -255,40 +291,3 @@ class Game(BaseModel):
             time_limit=self.timeLimit,
             game=self.game,
         )
-
-
-class Session(Base):
-    """
-    For unregistered players to be able to play online games.
-    """
-
-    __tablename__ = "Session"
-
-    session_id = Column(
-        INTEGER(unsigned=True), nullable=False, primary_key=True, comment="Session ID"
-    )
-
-    session: str = Column(
-        String(255),
-        primary_key=False,
-        nullable=False,
-        unique=True,
-        index=True,
-        comment="Session Token (Password for machines)",
-    )
-
-    user_id = Column(
-        ForeignKey("User.user_id"), nullable=True, comment="Linked User ID"
-    )
-
-    user: Optional[User] = relationship(
-        "User", back_populates="sessions", uselist=False, lazy=_LAZYMETHOD
-    )
-
-    players = relationship("Player", back_populates="session", lazy=_LAZYMETHOD)
-
-    def public_to_dict(self) -> classes.PublicChessEntityDict:
-        """
-        Like `to_dict` but public!
-        """
-        return {"name": None, "avatar_hash": None, "rank": None, "time_created": None}
