@@ -117,7 +117,7 @@ async def do_login(
 @is_logged_in(silent=True)
 async def do_logout(request: Request, user: models.User, session: models.Session):
     """
-    Removes JSON Web Token and destroys the session.
+    Removes JSON Web Token and destroys the session (if there are zero games associated with it).
     """
     query_session = request.ctx.session
 
