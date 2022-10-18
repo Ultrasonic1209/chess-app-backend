@@ -350,9 +350,9 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         mode(opponents) if opponents else None
     )  # checks if empty, tuples/lists evalulate to False if they are
 
-    return {
+    return json({
         "games_played": games_played,
         "games_won": games_won,
         "percentage_of_playing_white": (len(games_played_white) / games_played * 100) if games_played else 0,  # to stop zero division errors
         "favourite_opponent": opponent.to_dict_generalised() if opponent else None,
-    }
+    })
