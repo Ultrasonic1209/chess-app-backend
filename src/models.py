@@ -228,6 +228,9 @@ class Player(BaseModel):
         }
 
     def to_dict_generalised(self):
+        """
+        like to_dict but returns something not related to a game!
+        """
         return self.user.public_to_dict() if self.user else self.session.public_to_dict()
 
 
