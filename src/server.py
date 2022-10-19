@@ -59,7 +59,7 @@ app.extend(
         cors_always_send=True,
         cors_max_age=48,
         health=True,
-        logging=False,
+        logging=True,
     )
 )
 
