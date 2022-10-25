@@ -53,6 +53,9 @@ app.extend(
             re.compile(
                 r"https://ultrasonic1209-(.*)\.githubpreview\.dev"
             ),  # gh codespace web previews
+            re.compile(
+                r"https://ultrasonic1209-(.*)\.preview\.app\.github\.dev"
+            )   # gh codespace web previews (2)
         ],  # re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)")
         cors_supports_credentials=True,
         cors_allow_headers=["content-type"],
