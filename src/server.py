@@ -55,7 +55,8 @@ app.extend(
             ),  # gh codespace web previews
             re.compile(
                 r"https://ultrasonic1209-(.*)\.preview\.app\.github\.dev"
-            )   # gh codespace web previews (2)
+            ),   # gh codespace web previews (2)
+            "http://localhost:3000" # tauri demo on linux
         ],  # re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)")
         cors_supports_credentials=True,
         cors_allow_headers=["content-type"],
