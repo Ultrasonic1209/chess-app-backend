@@ -326,11 +326,17 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         game_results: List[models.Game] = game_result.scalars().all()
 
     games_played = len(game_results)
-    games_won = 0
 
     # Dear examiner:
     # I apologise for the monstrosity that I have created.
     # I wish you a very good day.
+    games_won = list(
+        filter(
+            lambda game: get_player(game).is_white == game.white_won,
+            game_results
+        )
+    )
+
     games_played_black = list(
         filter(
             lambda game: get_player(game).is_white is False,
@@ -352,7 +358,7 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
 
     return json({
         "games_played": games_played,
-        "games_won": games_won,
+        "games_won": len(games_won),
         "percentage_of_playing_white": (len(games_played_white) / games_played * 100) if games_played else 0,  # to stop zero division errors
         "favourite_opponent": opponent.to_dict_generalised() if opponent else None,
     })
