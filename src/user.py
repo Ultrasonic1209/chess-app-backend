@@ -323,7 +323,7 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
 
     async with query_session.begin():
         game_result: Result = await query_session.execute(query_games)
-        game_results: List[models.Game] = game_result.scalars().all()
+    game_results: List[models.Game] = game_result.scalars().all()
 
     games_played = len(game_results)
 

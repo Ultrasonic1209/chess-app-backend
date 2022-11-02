@@ -114,9 +114,8 @@ async def get_games(
 
     async with query_session.begin():
         game_result: Result = await query_session.execute(stmt)
-        game_results = game_result.all()
 
-    games: List[models.Game] = [game["Game"] for game in game_results]
+    games: List[models.Game] = game_result.scalars().all()
 
     async def process_game(game: models.Game) -> PublicChessGameResponse:
         """

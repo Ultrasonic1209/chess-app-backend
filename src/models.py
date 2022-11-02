@@ -293,22 +293,6 @@ class Game(BaseModel):
         "Player", back_populates="game", lazy=_LAZYMETHOD
     )
 
-    white_player: Optional[Player] = column_property(
-        select(Player)
-        .where(and_(
-            Player.game_id == game_id,
-            Player.is_white == True
-        ))
-    )
-
-    black_player = column_property(
-        select(Player)
-        .where(and_(
-            Player.game_id == game_id,
-            Player.is_white == False
-        ))
-    )
-
     async def hospice(self, chessgame: Optional[chess.pgn.Game] = None, force_save: bool = False):
         """
         If the game should end, make it end.
@@ -372,13 +356,19 @@ class Game(BaseModel):
                     self.white_won = True
 
         if self.white_won != old_white_won: # change the players' ranks!
-            winner = self.white_player if self.white_won else self.black_player
-            loser = self.black_player if self.white_won else self.white_player
+            for player in self.players:
+                if player.is_white:
+                    white = player
+                else:
+                    black = player
 
-            if winning_user := winner.user:
+            winner = white if self.white_won else black
+            loser = black if self.white_won else white
+
+            if winning_user := winner:
                 winning_user.score += 1
 
-            if losing_user := loser.user:
+            if losing_user := loser:
                 losing_user.score -= 1
 
         if (game != chessgame) or force_save:

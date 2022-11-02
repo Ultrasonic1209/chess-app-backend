@@ -62,7 +62,7 @@ app.extend(
         cors_allow_headers=["content-type"],
         cors_always_send=True,
         cors_max_age=48,
-        health=True,
+        health=not ISDEV,
         logging=False,
     )
 )
