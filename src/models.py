@@ -10,8 +10,9 @@ import arrow
 import chess
 import chess.pgn
 
-from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func, select
+from sqlalchemy.sql import and_
+from sqlalchemy.orm import declarative_base, relationship, column_property
 from sqlalchemy.dialects.mysql.types import INTEGER
 
 from sqlalchemy_utils import PasswordType, EmailType, ArrowType, force_auto_coercion
@@ -273,7 +274,7 @@ class Game(BaseModel):
         ArrowType, nullable=True, comment="Game end timestamp"
     )
 
-    white_won = Column(
+    white_won: bool = Column(
         BOOLEAN(), nullable=True, comment="Whether the player playing white won or not"
     )
 
@@ -293,6 +294,22 @@ class Game(BaseModel):
         "Player", back_populates="game", lazy=_LAZYMETHOD
     )
 
+    white_player: Optional[Player] = column_property(
+        select(Player)
+        .where(and_(
+            Player.game_id == game_id,
+            Player.is_white == True
+        ))
+    )
+
+    black_player = column_property(
+        select(Player)
+        .where(and_(
+            Player.game_id == game_id,
+            Player.is_white == False
+        ))
+    )
+
     async def hospice(self, chessgame: Optional[chess.pgn.Game] = None, force_save: bool = False):
         """
         If the game should end, make it end.
@@ -302,6 +319,7 @@ class Game(BaseModel):
             return
 
         game = chessgame or chess.pgn.read_game(StringIO(self.game))
+        old_white_won = self.white_won
 
         if self.time_started:
             if outcome := game.end().board().outcome():
@@ -353,6 +371,16 @@ class Game(BaseModel):
 
                     self.time_ended = arrow.now()
                     self.white_won = True
+
+        if self.white_won != old_white_won: # change the players' ranks!
+            winner = self.white_player if self.white_won else self.black_player
+            loser = self.black_player if self.white_won else self.white_player
+
+            if winning_user := winner.user:
+                winning_user.score += 1
+
+            if losing_user := loser.user:
+                losing_user.score -= 1
 
         if (game != chessgame) or force_save:
             exporter = chess.pgn.StringExporter(
