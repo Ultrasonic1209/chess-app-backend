@@ -414,35 +414,13 @@ async def make_move(
                 black -= seconds_since_start - time_moving
 
             if white <= 0:
-                chessgame.headers["Result"] = "0-1"
-                chessgame.headers["Termination"] = "time forefit"
+                await request.respond(json({"message": "white ran out of time before your request reached the server"}))
 
-                exporter = chess.pgn.StringExporter(
-                    headers=True, variations=True, comments=True
-                )
-
-                pgn_string = chessgame.accept(exporter)
-
-                game.game = pgn_string
-
-                game.time_ended = arrow.now()
-
-                return json({"message": "white ran out of time"})
+                return await game.hospice()
             elif black <= 0:
-                chessgame.headers["Result"] = "1-0"
-                chessgame.headers["Termination"] = "time forefit"
+                await request.respond(json({"message": "black ran out of time before your request reached the server"}))
 
-                exporter = chess.pgn.StringExporter(
-                    headers=True, variations=True, comments=True
-                )
-
-                pgn_string = chessgame.accept(exporter)
-
-                game.game = pgn_string
-
-                game.time_ended = arrow.now()
-
-                return json({"message": "black ran out of time"})
+                return await game.hospice()
 
             chessgame.end().add_line([move])
             chessgame.end().set_clock((game.timeLimit * 2) - seconds_since_start)
