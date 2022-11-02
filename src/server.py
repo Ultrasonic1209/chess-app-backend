@@ -209,8 +209,19 @@ async def index(request: Request):
     return text(resp)
 
 
-app.static("/static", "./static")
-app.static("/favicon.ico", "./static/favicon.ico", name="favicon")
+app.static(
+    uri="/static",
+    file_or_directory="./static",
+    name="static",
+    use_modified_since=True
+)
+
+app.static(
+    uri="/favicon.ico",
+    file_or_directory="./static/favicon.ico",
+    name="favicon",
+    use_modified_since=True
+)
 
 if __name__ == "__main__":
     app.run(  # app.make_coffee is also a thing somehow lol
