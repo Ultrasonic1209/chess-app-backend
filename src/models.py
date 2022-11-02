@@ -318,6 +318,8 @@ class Game(BaseModel):
                 white = 0
                 black = 0
 
+                is_white = True
+
                 last_time = self.timeLimit
 
                 for time in times:
@@ -344,11 +346,13 @@ class Game(BaseModel):
                     game.headers["Termination"] = "time forefit"
 
                     self.time_ended = arrow.now()
+                    self.white_won = False
                 elif black <= 0:
                     game.headers["Result"] = "1-0"
                     game.headers["Termination"] = "time forefit"
 
                     self.time_ended = arrow.now()
+                    self.white_won = True
 
         if (game != chessgame) or force_save:
             exporter = chess.pgn.StringExporter(

@@ -22,7 +22,6 @@ from sqlalchemy import select, or_
 from sqlalchemy.sql.expression import Select
 
 from classes import (
-    PublicChessGame,
     PublicChessGameResponse,
     Request,
     ChessEntry,
@@ -389,9 +388,11 @@ async def make_move(
 
             last_time = game.timeLimit
 
+            is_white = True
+
             for time in times:
 
-                if playeriswhite:
+                if is_white:
                     white += last_time - time
                 else:
                     black += last_time - time
