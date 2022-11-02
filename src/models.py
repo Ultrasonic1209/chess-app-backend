@@ -365,10 +365,10 @@ class Game(BaseModel):
             winner = white if self.white_won else black
             loser = black if self.white_won else white
 
-            if winning_user := winner:
+            if winning_user := winner.user:
                 winning_user.score += 1
 
-            if losing_user := loser:
+            if losing_user := loser.user:
                 losing_user.score -= 1
 
         if (game != chessgame) or force_save:
