@@ -10,8 +10,7 @@ import arrow
 import chess
 import chess.pgn
 
-from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func, select
-from sqlalchemy.sql import and_
+from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func, select, and_
 from sqlalchemy.orm import declarative_base, relationship, column_property
 from sqlalchemy.dialects.mysql.types import INTEGER
 
