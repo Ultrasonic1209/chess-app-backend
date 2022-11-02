@@ -123,20 +123,9 @@ async def get_games(
         """
         Sets the `is_white` flag for games.
         """
-        dictgame: PublicChessGame = game.to_dict()
+        await game.hospice()
 
-        # not good for DRY but meh
-        if game.game:
-            chessgame = chess.pgn.read_game(StringIO(game.game))
-            if (outcome := chessgame.end().board().outcome()) and (
-                game.time_ended is None
-            ):
-                chessgame.headers["Result"] = outcome.result()
-                chessgame.headers["Termination"] = "normal"
-
-                async with query_session.begin():
-                    game.time_ended = arrow.now()
-                    game.white_won = outcome.winner
+        dictgame = game.to_dict()
 
         dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
         return dictgame
@@ -220,16 +209,7 @@ async def get_game(
 
         is_white = get_player_team(game=game, session=session, user=user)
 
-        # who cares about DRY smh
-        if game.game:
-            chessgame = chess.pgn.read_game(StringIO(game.game))
-
-            if outcome := chessgame.end().board().outcome():
-                chessgame.headers["Result"] = outcome.result()
-                chessgame.headers["Termination"] = "normal"
-
-                game.time_ended = arrow.now()
-                game.white_won = outcome.winner
+        await game.hospice()
 
     gamedict: PublicChessGameResponse = game.to_dict()
 
@@ -404,7 +384,6 @@ async def make_move(
             for node in chessgame.mainline():
                 times.append(node.clock() - game.timeLimit)
 
-            is_white = True
             white = 0
             black = 0
 
@@ -412,9 +391,9 @@ async def make_move(
 
             for time in times:
 
-                if is_white:
+                if playeriswhite:
                     white += last_time - time
-                elif not is_white:
+                else:
                     black += last_time - time
                 last_time = time
                 is_white = not is_white
@@ -472,21 +451,7 @@ async def make_move(
             chessgame.end().add_line([move])
             chessgame.end().set_clock(seconds_since_start)
 
-        # not good for DRY but meh
-        if outcome := chessgame.end().board().outcome():
-            chessgame.headers["Result"] = outcome.result()
-            chessgame.headers["Termination"] = "normal"
-
-            game.time_ended = arrow.now()
-            game.white_won = outcome.winner
-
-        exporter = chess.pgn.StringExporter(
-            headers=True, variations=True, comments=True
-        )
-
-        pgn_string = chessgame.accept(exporter)
-
-        game.game = pgn_string
+        await game.hospice(chessgame, force_save=True)
 
     gamedict: PublicChessGameResponse = game.to_dict()
     gamedict["is_white"] = playeriswhite

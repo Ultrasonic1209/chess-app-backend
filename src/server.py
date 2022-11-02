@@ -63,7 +63,7 @@ app.extend(
         cors_always_send=True,
         cors_max_age=48,
         health=True,
-        logging=True,
+        logging=False,
     )
 )
 
@@ -214,7 +214,7 @@ app.static("/favicon.ico", "./static/favicon.ico", name="favicon")
 
 if __name__ == "__main__":
     app.run(  # app.make_coffee is also a thing somehow lol
-        host="0.0.0.0",
+        host="localhost",
         port=6969,
         fast=True,
         auto_reload=True,

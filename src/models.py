@@ -3,9 +3,12 @@ Represents the database as a bunch of Python objects.
 """
 from typing import List, Optional, Union
 from email.headerregistry import Address
+from io import StringIO
 import hashlib
 
 import arrow
+import chess
+import chess.pgn
 
 from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func
 from sqlalchemy.orm import declarative_base, relationship
@@ -189,7 +192,7 @@ class Player(BaseModel):
         comment="Linked Game ID",
     )
 
-    is_white = Column(
+    is_white: bool = Column(
         BOOLEAN(),
         nullable=False,
         primary_key=True,
@@ -289,6 +292,73 @@ class Game(BaseModel):
     players: List[Player] = relationship(
         "Player", back_populates="game", lazy=_LAZYMETHOD
     )
+
+    async def hospice(self, chessgame: Optional[chess.pgn.Game] = None, force_save: bool = False):
+        """
+        If the game should end, make it end.
+        """
+
+        if not self.time_started:
+            return
+
+        game = chessgame or chess.pgn.read_game(StringIO(self.game))
+
+        if self.time_started:
+            if outcome := game.end().board().outcome():
+                game.headers["Result"] = outcome.result()
+                game.headers["Termination"] = "normal"
+
+                self.time_ended = arrow.now()
+                self.white_won = outcome.winner
+            elif self.timer.timer_name == "Countdown": # check if players are out of time
+                seconds_since_start = (arrow.now() - self.time_started).total_seconds()
+
+                times = [node.clock() - self.timeLimit for node in game.mainline()]
+
+                white = 0
+                black = 0
+
+                last_time = self.timeLimit
+
+                for time in times:
+
+                    if is_white:
+                        white += last_time - time
+                    elif not is_white:
+                        black += last_time - time
+                    last_time = time
+                    is_white = not is_white
+
+                time_moving = white + black
+
+                white = self.timeLimit - white
+                black = self.timeLimit - black
+
+                if game.turn() == chess.WHITE:
+                    white -= seconds_since_start - time_moving
+                elif game.turn() == chess.BLACK:
+                    black -= seconds_since_start - time_moving
+
+                if white <= 0:
+                    game.headers["Result"] = "0-1"
+                    game.headers["Termination"] = "time forefit"
+
+                    self.time_ended = arrow.now()
+                elif black <= 0:
+                    game.headers["Result"] = "1-0"
+                    game.headers["Termination"] = "time forefit"
+
+                    self.time_ended = arrow.now()
+
+        if (game != chessgame) or force_save:
+            exporter = chess.pgn.StringExporter(
+                headers=True, variations=True, comments=True
+            )
+
+            pgn_string = game.accept(exporter)
+
+            self.game = pgn_string
+
 
     def to_dict(self):
         # this is technically the more "correct" way to go around this it seems
