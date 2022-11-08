@@ -351,8 +351,8 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
     query_session = request.ctx.session
 
     async with query_session.begin():
-        game_result: Result = await query_session.execute(query_games) # execute query_games, save result to game_result
         game_result_amount: Result = await query_session.execute(query_game_amount) # execute query_game_amount, save result to game_result_amount
+        game_result: Result = await query_session.execute(query_games) # execute query_games, save result to game_result
 
     game_results: List[models.Game] = game_result.scalars().all() # represent games_result as a list of ORM Game objects
 
