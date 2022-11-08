@@ -18,6 +18,7 @@ from sanic_ext import validate, openapi
 from sqlalchemy import select
 from sqlalchemy.sql.expression import Select, or_
 from sqlalchemy.engine import Result
+from sqlalchemy.sql.functions import count
 from sqlalchemy import exc
 
 from auth import is_logged_in, has_session
@@ -179,23 +180,30 @@ async def new_user(
     query_session = request.ctx.session
     try:
         async with query_session.begin():
-            user = models.User()
+            user = models.User() # see diagram at top of Classes/OOP section of documentation
+
+            # params is the parsed HTTP POST body, as a Python dataclass
+            # the username and password has to be set to this
 
             user.username = params.username
             user.password = params.password
 
             try:
+                # python has a module for handling email, i see no reason why i can't use it
+                # if the email field isnt blank then attempt to parse, else null the field in the database
                 user.email = (
                     str(Address(addr_spec=params.email)) if params.email != "" else None
                 )
-            except email.errors.InvalidHeaderDefect:
+            except email.errors.InvalidHeaderDefect: # it even has its own exceptions for error handling!
                 return json(
                     {"accept": False, "message": "An invalid email was provided."},
                     status=400,
                 )
 
+            # now that the user object has been created, instruct the ORM to add it to the database
             query_session.add(user)
-    except exc.IntegrityError:
+            # changes will apply when the query_session is exited
+    except exc.IntegrityError: # if username unique constraint is not fulfilled
         return json(
             {
                 "accept": False,
@@ -293,6 +301,9 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             None,
         )
 
+    query_game_amount: Select = select(count(models.Game.game_id)) # uses the COUNT aggregate function
+    query_game_amount = query_game_amount.distinct()
+
     query_games: Select = select(models.Game)
     query_games = query_games.distinct()
 
@@ -307,25 +318,29 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         .where(models.Player.game_id == models.Game.game_id)
     )
 
+    exp = models.Session.__table__.columns.session_id.in_(query_session_games)
     if user:
-        query_games = query_games.where(
-            or_(
+        exp = or_(
                 models.User.__table__.columns.user_id.in_(query_users_games),
                 models.Session.__table__.columns.session_id.in_(query_session_games),
             )
-        )
+
+    if user:
+        query_games = query_games.where(exp)
+        query_game_amount = query_game_amount.where(exp)
     else:
-        query_games = query_games.where(
-            models.Session.__table__.columns.session_id.in_(query_session_games)
-        )
+        query_games = query_games.where(exp)
+        query_game_amount.where(exp)
 
     query_session = request.ctx.session
 
     async with query_session.begin():
         game_result: Result = await query_session.execute(query_games)
+        game_result_amount: Result = await query_session.execute(query_game_amount)
+
     game_results: List[models.Game] = game_result.scalars().all()
 
-    games_played = len(game_results)
+    games_played: int = game_result_amount.scalar_one()
 
     # Dear examiner:
     # I apologise for the monstrosity that I have created.
