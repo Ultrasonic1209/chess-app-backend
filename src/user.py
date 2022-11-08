@@ -279,11 +279,16 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         """
         Returns the user's player in this game.
         """
+        # "next" takes a given iterator and returns the next item in that iterator
+        # in this usecase we're just getting the only item in the iterator
         return next(
+            # filters the game's list of players
+            # remove players that DO have the requesting session (or user)'s id
+            # returns an iterator containing a single player
             filter(
                 lambda player: (player.user_id == (user.user_id if user else -1))
                 or (player.session_id == session.session_id),
-                game.players,
+                game.players, 
             ),
             None,
         )
@@ -292,7 +297,12 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         """
         Returns the opposing user's player in this game.
         """
+        # "next" takes a given iterator and returns the next item in that iterator
+        # in this usecase we're just getting the only item in the iterator
         return next(
+            # filters the game's list of players
+            # remove players that do NOT have the requesting session (or user)'s id
+            # returns an iterator containing a single player
             filter(
                 lambda player: (player.user_id != (user.user_id if user else -1))
                 and (player.session_id != session.session_id),
@@ -301,63 +311,69 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             None,
         )
 
-    query_game_amount: Select = select(count(models.Game.game_id)) # uses the COUNT aggregate function
-    query_game_amount = query_game_amount.distinct()
+    # remove duplicates in the queries that may occur as a result of using the two subqueries in an "or"
+    # (the cartesian product is unavoidable in this case)
 
-    query_games: Select = select(models.Game)
+    query_game_amount: Select = select(count(models.Game.game_id)) # SELECT COUNT(`Game`.*)
+    query_game_amount = query_game_amount.distinct() 
+
+    query_games: Select = select(models.Game) # SELECT `Game`.*
     query_games = query_games.distinct()
 
+    # get the player's user_id where the user corresponds to the requesting session/user
+    # and also where the player's game id is equal to the game's id
     query_users_games: Select = (
         select(models.Player.user_id)
         .where(models.Player.user == user)
         .where(models.Player.game_id == models.Game.game_id)
     )
+
+    # get the player's session_id where the session corresponds to the requesting session
+    # and also where the player's game id is equal to the game's id
     query_session_games: Select = (
         select(models.Player.session_id)
         .where(models.Player.session == session)
         .where(models.Player.game_id == models.Game.game_id)
     )
 
-    exp = models.Session.__table__.columns.session_id.in_(query_session_games)
-    if user:
+    if user: # set the query to use both subqueries with an OR operator if the requesting session has a user
         exp = or_(
                 models.User.__table__.columns.user_id.in_(query_users_games),
                 models.Session.__table__.columns.session_id.in_(query_session_games),
             )
+    else: # if not, just use the session subquery
+        exp = models.Session.__table__.columns.session_id.in_(query_session_games)
 
-    if user:
-        query_games = query_games.where(exp)
-        query_game_amount = query_game_amount.where(exp)
-    else:
-        query_games = query_games.where(exp)
-        query_game_amount.where(exp)
+    # update the main queries with the given subquery/subqueries
+    query_games = query_games.where(exp)
+    query_game_amount = query_game_amount.where(exp)
 
     query_session = request.ctx.session
 
     async with query_session.begin():
-        game_result: Result = await query_session.execute(query_games)
-        game_result_amount: Result = await query_session.execute(query_game_amount)
+        game_result: Result = await query_session.execute(query_games) # execute query_games, save result to game_result
+        game_result_amount: Result = await query_session.execute(query_game_amount) # execute query_game_amount, save result to game_result_amount
 
-    game_results: List[models.Game] = game_result.scalars().all()
+    game_results: List[models.Game] = game_result.scalars().all() # represent games_result as a list of ORM Game objects
 
-    games_played: int = game_result_amount.scalar_one()
+    games_played: int = game_result_amount.scalar_one() # represent game_result_amount as an integer showing the number of games played
 
-    # Dear examiner:
-    # I apologise for the monstrosity that I have created.
-    # I wish you a very good day.
     games_won = list(
         filter(
             lambda game: get_player(game).is_white == game.white_won,
-            game_results
+            game_results # from the list of game results, remove those that the user did not win
         )
     )
 
+    # from the list of game results, remove those that the user was playing black in
     games_played_black = list(
         filter(
             lambda game: get_player(game).is_white is False,
             game_results,
         )
     )
+
+    # from the list of game results, "filter" out those that the user was playing white in
     games_played_white = list(
         filter(
             lambda game: get_player(game).is_white is True,
@@ -365,8 +381,11 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         )
     )
 
+    # get all opponents to all the games that the player has played, then
+    # "filter" out the opponents belonging to games that have none (remove all of the None entries)
     opponents = tuple(filter(None, (get_opponent(game) for game in game_results)))
 
+    # gets the most common opponent in the opponents list
     opponent = (
         mode(opponents) if opponents else None
     )  # checks if empty, tuples/lists evalulate to False if they are
