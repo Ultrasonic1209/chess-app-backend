@@ -7,6 +7,8 @@ from typing import Any
 from sanic import json
 from sanic.log import logger
 
+from httpx._models import Response
+
 
 from classes import Request, App
 
@@ -18,7 +20,7 @@ async def verify_captcha(
     Takes FC solution and validates it
     """
 
-    resp = await app.ctx.httpx.post(
+    resp: Response = await app.ctx.httpx.post(
         "https://api.friendlycaptcha.com/api/v1/siteverify",
         json={
             "solution": given_solution,
