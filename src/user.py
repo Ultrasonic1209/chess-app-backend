@@ -347,8 +347,6 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
 
     query_session = request.ctx.session
 
-    #print(f"QQ: {query_game_amount.compile(query_session.bind)}")
-
     async with query_session.begin():
         # execute query_game_amount, save result to game_result_amount
         game_result_amount: Result = await query_session.execute(query_game_amount)
@@ -392,7 +390,7 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
     # gets the most common opponent in the opponents list
     opponent = (
         mode(opponents) if opponents else None
-    )  # checks if empty, tuples/lists evalulate to False if they are
+    )  # checks if empty, tuple/list objects evaluate to False if they are
 
     return json({
         "games_played": games_played,
