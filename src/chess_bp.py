@@ -140,9 +140,9 @@ async def get_games(
         dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
         return dictgame
 
-    games: List[PublicChessGameResponse] = [await process_game(game) for game in games]
+    formattedgames: List[PublicChessGameResponse] = [await process_game(game) for game in games]
 
-    return json(games)
+    return json(formattedgames)
 
 
 @chess_blueprint.post("/game")
@@ -161,7 +161,7 @@ async def create_game(
     """
     query_session = request.ctx.session
 
-    gtstmt = select(models.GameTimer).where(
+    gtstmt: Select = select(models.GameTimer).where(
         models.GameTimer.timer_name
         == ("Countdown" if options.countingDown else "Countup")
     )
@@ -221,9 +221,7 @@ async def get_game(
 
         await game.hospice()
 
-    gamedict: PublicChessGameResponse = game.to_dict()
-
-    gamedict["is_white"] = is_white
+    gamedict = PublicChessGameResponse(**game.to_dict(), is_white=is_white)
 
     return json(gamedict)
 
@@ -374,6 +372,9 @@ async def make_move(
 
         chessgame = chess.pgn.read_game(StringIO(game.game))
 
+        if chessgame is None:
+            return json({"message": "failed to read game data. uh oh"}, status=500)
+
         chessboard = chessgame.end().board()
 
         whiteturn = chessgame.end().board().turn == chess.WHITE
@@ -390,9 +391,18 @@ async def make_move(
 
         if game.timer.timer_name == "Countdown":
 
+            if game.timeLimit is None:
+                return json({"message": "countdown games should have a time limit...\nuh oh."}, status=500)
+
             times = []
             for node in chessgame.mainline():
-                times.append(node.clock() - game.timeLimit)
+
+                clock = node.clock()
+
+                if clock is None:
+                    return json({"message": "failed to read move data. uh oh.", "move": repr(node)}, status=500)
+
+                times.append(clock - game.timeLimit)
 
             white = 0
             black = 0
@@ -443,7 +453,9 @@ async def make_move(
 
         await game.hospice(chessgame, force_save=True)
 
-    gamedict: PublicChessGameResponse = game.to_dict()
-    gamedict["is_white"] = playeriswhite
+    # ** operator unpacks the dictionary into arguments
+    # i can use this along with the is_white kwarg to easily build a response to
+    # this request.
+    gamedict = PublicChessGameResponse(**game.to_dict(), is_white=playeriswhite)
 
-    return json(game.to_dict())
+    return json(gamedict)

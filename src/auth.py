@@ -42,9 +42,10 @@ def check_token(request: Request) -> Optional[Token]:
         return None
 
     try:
-        return jwt.decode(
+        # i shouldnt need to unpack the jwt here but it keeps the typechecker happy
+        return Token(**jwt.decode(
             jwt=token, key=request.app.config.SECRET, algorithms=["HS256"]
-        )
+        ))
     except jwt.exceptions.InvalidTokenError:
         return None
 
@@ -77,7 +78,7 @@ async def authenticate_request(request: Request):
 
             user_session: Optional[Session] = user_session_result.scalar_one_or_none()
 
-            user = user_session.user
+            user = user_session.user if user_session else None
 
         return user, user_session
     else:

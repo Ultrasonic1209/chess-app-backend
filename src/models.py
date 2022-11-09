@@ -281,7 +281,7 @@ class Game(BaseModel):
         ForeignKey("GameTimer.timer_id"), nullable=False, comment="The game's timer ID"
     )
 
-    timeLimit: int = Column(
+    timeLimit: Optional[int] = Column(
         INTEGER(unsigned=True),
         nullable=True,
         comment="The amount of time each player gets",

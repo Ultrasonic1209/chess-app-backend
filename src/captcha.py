@@ -2,6 +2,7 @@
 Responsible for captcha validation.
 """
 from functools import wraps
+from typing import Any
 
 from sanic import json
 from sanic.log import logger
@@ -27,6 +28,8 @@ async def verify_captcha(
     )
 
     resp_body: dict = resp.json()
+
+    toreturn: dict[str, Any]
 
     if resp.status_code == 200:
 
