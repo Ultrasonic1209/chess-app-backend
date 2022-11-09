@@ -4,7 +4,6 @@ Will handle everything related to chess games.
 from io import StringIO
 import random
 from typing import List, Optional
-from distutils.util import strtobool
 
 import chess
 import chess.pgn
@@ -38,6 +37,23 @@ import models
 
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
 
+def strtobool(val: str):
+    """
+    Taken from the now deprecated `distutils.util` module.
+
+    Convert a string representation of truth to true (1) or false (0).
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    else:
+        raise ValueError(f"invalid truth value {val}")
 
 def get_player_team(game: models.Game, session: models.Session, user: models.User):
     """
@@ -71,46 +87,42 @@ async def get_games(
     Lets users get a list of online games
     """
 
+    # issue with parsing of options unfortunately
     options = dict(request.query_args)
 
-    user_games: Select = (
-        select(models.Player.user_id)
+    # get all game ids that the requesting user is participating in
+    query_users_game_ids: Select = (
+        select(models.Player.game_id)
         .where(models.Player.user == user)
-        .where(models.Player.game_id == models.Game.game_id)
     )
-    session_games: Select = (
-        select(models.Player.session_id)
+
+    # get all game ids that the requesting session is participating in
+    query_session_game_ids: Select = (
+        select(models.Player.game_id)
         .where(models.Player.session == session)
-        .where(models.Player.game_id == models.Game.game_id)
     )
 
     stmt: Select = select(models.Game)
 
+    # limits the database response size to what the requesting client wants.
+    # in order to give the the impression of pagination, offset will also be used
+    # to move the database cursor along based off of the given page size.
     stmt = stmt.limit(int(options["page_size"])).offset(
         int(options["page"]) * int(options["page_size"])
     )
 
-    stmt = stmt.distinct()
-
     if bool(strtobool(options["my_games"])) is True:
-        if user:
-            stmt = stmt.where(
-                or_(
-                    models.User.__table__.columns.user_id.in_(user_games),
-                    models.Session.__table__.columns.session_id.in_(session_games),
-                )
+        if user:  # set the query to use both subqueries with an OR operator if the requesting session has a user
+            exp = or_(
+                models.Game.__table__.columns.game_id.in_(query_session_game_ids),
+                models.Game.__table__.columns.game_id.in_(query_users_game_ids),
             )
-            # cartesian product here is unavoidable due to the or_ being present
-            # we need the secondary check for session incase someone logs in whilst having unregistered games
-            # wouldnt want them losing control of their game!
-        else:
-            stmt = stmt.where(
-                models.Session.__table__.columns.session_id.in_(session_games)
-            )
+        else:  # if the session does not have a user, just use the session subquery
+            exp = models.Game.__table__.columns.game_id.in_(query_session_game_ids)
+
+        stmt = stmt.where(exp)
 
     query_session = request.ctx.session
-
-    # print(stmt.compile(query_session.bind))
 
     async with query_session.begin():
         game_result: Result = await query_session.execute(stmt)

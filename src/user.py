@@ -316,10 +316,6 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             None,
         )
 
-    # in any other scenario, i'd forgo creating and appending clauses to query_game_amount
-    # and instead just elect to copy query_games and apply .distinct() to it
-    # examiner might not like that though.
-
     query_game_amount: Select = select(
         count(models.Game.game_id))  # SELECT COUNT(`Game`.game_id)
 
