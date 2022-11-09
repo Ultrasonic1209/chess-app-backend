@@ -63,7 +63,7 @@ async def do_login(
     Captcha is provided by https://friendlycaptcha.com/
     """
 
-    if session.user:
+    if user:
         return json({"accept": False, "message": "You are already logged in!"})
 
     query_session = request.ctx.session
@@ -76,35 +76,37 @@ async def do_login(
     async with query_session.begin():
         resp: Result = await query_session.execute(stmt)
 
-        user: Optional[models.User] = resp.scalar_one_or_none()
+        resp_user: Optional[models.User] = resp.scalar_one_or_none()
 
-        if user is None:
+        if resp_user is None:
             # account not found
             return json({"accept": False, "message": "Invalid username or password."})
 
-        if user.password != password:
+        if resp_user.password != password:
             # password incorrect
             return json({"accept": False, "message": "Invalid username or password."})
 
         # user is authenticated
 
-        user.sessions.append(session)
+        resp_user.sessions.append(session)
 
     expires = (
-        (datetime.now() + timedelta(weeks=4)).timestamp() if params.rememberMe else None
+        (datetime.now() + timedelta(weeks=4)
+         ).timestamp() if params.rememberMe else None
     )
 
-    payload = {"user_id": user.user_id, "session": session.session, "expires": expires}
+    payload = {"user_id": resp_user.user_id,
+               "session": session.session, "expires": expires}
 
     response = json(
-        {"accept": True, "message": user_facing_message, "profile": user.to_dict()}
+        {"accept": True, "message": user_facing_message, "profile": resp_user.to_dict()}
     )
 
     token = jwt.encode(payload, request.app.config.SECRET)
 
     response.cookies[".CHECKMATESECRET"] = token
 
-    if params.rememberMe:
+    if expires:
         response.cookies[".CHECKMATESECRET"]["expires"] = datetime.fromtimestamp(
             expires
         )
@@ -180,7 +182,7 @@ async def new_user(
     query_session = request.ctx.session
     try:
         async with query_session.begin():
-            user = models.User() # see diagram at top of Classes/OOP section of documentation
+            user = models.User()  # see diagram at top of Classes/OOP section of documentation
 
             # params is the parsed HTTP POST body, as a Python dataclass
             # the username and password has to be set to this
@@ -192,9 +194,10 @@ async def new_user(
                 # python has a module for handling email, i see no reason why i can't use it
                 # if the email field isnt blank then attempt to parse, else null the field in the database
                 user.email = (
-                    str(Address(addr_spec=params.email)) if params.email != "" else None
+                    str(Address(addr_spec=params.email)
+                        ) if params.email != "" else None
                 )
-            except email.errors.InvalidHeaderDefect: # it even has its own exceptions for error handling!
+            except email.errors.InvalidHeaderDefect:  # it even has its own exceptions for error handling!
                 return json(
                     {"accept": False, "message": "An invalid email was provided."},
                     status=400,
@@ -203,7 +206,7 @@ async def new_user(
             # now that the user object has been created, instruct the ORM to add it to the database
             query_session.add(user)
             # changes will apply when the query_session is exited
-    except exc.IntegrityError: # if username unique constraint is not fulfilled
+    except exc.IntegrityError:  # if username unique constraint is not fulfilled
         return json(
             {
                 "accept": False,
@@ -286,9 +289,10 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             # remove players that DO have the requesting session (or user)'s id
             # returns an iterator containing a single player
             filter(
-                lambda player: (player.user_id == (user.user_id if user else -1))
+                lambda player: (player.user_id == (
+                    user.user_id if user else -1))
                 or (player.session_id == session.session_id),
-                game.players, 
+                game.players
             ),
             None,
         )
@@ -304,45 +308,42 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             # remove players that do NOT have the requesting session (or user)'s id
             # returns an iterator containing a single player
             filter(
-                lambda player: (player.user_id != (user.user_id if user else -1))
+                lambda player: (player.user_id != (
+                    user.user_id if user else -1))
                 and (player.session_id != session.session_id),
                 game.players,
             ),
             None,
         )
 
-    # remove duplicates in the queries that may occur as a result of using the two subqueries in an "or"
-    # (the cartesian product is unavoidable in this case)
+    # in any other scenario, i'd forgo creating and appending clauses to query_game_amount
+    # and instead just elect to copy query_games and apply .distinct() to it
+    # examiner might not like that though.
 
-    query_game_amount: Select = select(count(models.Game.game_id)) # SELECT COUNT(`Game`.*)
-    query_game_amount = query_game_amount.distinct() 
+    query_game_amount: Select = select(
+        count(models.Game.game_id))  # SELECT COUNT(`Game`.game_id)
 
-    query_games: Select = select(models.Game) # SELECT `Game`.*
-    query_games = query_games.distinct()
+    query_games: Select = select(models.Game)  # SELECT `Game`.*
 
-    # get the player's user_id where the user corresponds to the requesting session/user
-    # and also where the player's game id is equal to the game's id
-    query_users_games: Select = (
-        select(models.Player.user_id)
+    # get all game ids that the requesting user is participating in
+    query_users_game_ids: Select = (
+        select(models.Player.game_id)
         .where(models.Player.user == user)
-        .where(models.Player.game_id == models.Game.game_id)
     )
 
-    # get the player's session_id where the session corresponds to the requesting session
-    # and also where the player's game id is equal to the game's id
-    query_session_games: Select = (
-        select(models.Player.session_id)
+    # get all game ids that the requesting session is participating in
+    query_session_game_ids: Select = (
+        select(models.Player.game_id)
         .where(models.Player.session == session)
-        .where(models.Player.game_id == models.Game.game_id)
     )
 
-    if user: # set the query to use both subqueries with an OR operator if the requesting session has a user
+    if user:  # set the query to use both subqueries with an OR operator if the requesting session has a user
         exp = or_(
-                models.User.__table__.columns.user_id.in_(query_users_games),
-                models.Session.__table__.columns.session_id.in_(query_session_games),
-            )
-    else: # if not, just use the session subquery
-        exp = models.Session.__table__.columns.session_id.in_(query_session_games)
+            models.Game.__table__.columns.game_id.in_(query_session_game_ids),
+            models.Game.__table__.columns.game_id.in_(query_users_game_ids),
+        )
+    else:  # if not, just use the session subquery
+        exp = models.Game.__table__.columns.game_id.in_(query_session_game_ids)
 
     # update the main queries with the given subquery/subqueries
     query_games = query_games.where(exp)
@@ -350,25 +351,31 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
 
     query_session = request.ctx.session
 
+    #print(f"QQ: {query_game_amount.compile(query_session.bind)}")
+
     async with query_session.begin():
-        game_result_amount: Result = await query_session.execute(query_game_amount) # execute query_game_amount, save result to game_result_amount
-        game_result: Result = await query_session.execute(query_games) # execute query_games, save result to game_result
+        # execute query_game_amount, save result to game_result_amount
+        game_result_amount: Result = await query_session.execute(query_game_amount)
+        # execute query_games, save result to game_result
+        game_result: Result = await query_session.execute(query_games)
 
-    game_results: List[models.Game] = game_result.scalars().all() # represent games_result as a list of ORM Game objects
+    # represent games_result as a list of ORM Game objects
+    game_results: List[models.Game] = game_result.scalars().all()
 
-    games_played: int = game_result_amount.scalar_one() # represent game_result_amount as an integer showing the number of games played
+    # represent game_result_amount as an integer showing the number of games played
+    games_played: int = game_result_amount.scalar_one()
 
     games_won = list(
         filter(
-            lambda game: get_player(game).is_white == game.white_won,
-            game_results # from the list of game results, remove those that the user did not win
+            lambda game: getattr(get_player(game), "is_white", None) == game.white_won,
+            game_results  # from the list of game results, remove those that the user did not win
         )
     )
 
-    # from the list of game results, remove those that the user was playing black in
+    # from the list of game results, "filter" out those that the user was playing black in
     games_played_black = list(
         filter(
-            lambda game: get_player(game).is_white is False,
+            lambda game: getattr(get_player(game), "is_white", None) is False,
             game_results,
         )
     )
@@ -376,14 +383,15 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
     # from the list of game results, "filter" out those that the user was playing white in
     games_played_white = list(
         filter(
-            lambda game: get_player(game).is_white is True,
+            lambda game: getattr(get_player(game), "is_white", None) is True,
             game_results,
         )
     )
 
     # get all opponents to all the games that the player has played, then
     # "filter" out the opponents belonging to games that have none (remove all of the None entries)
-    opponents = tuple(filter(None, (get_opponent(game) for game in game_results)))
+    opponents = tuple(filter(None, (get_opponent(game)
+                      for game in game_results)))
 
     # gets the most common opponent in the opponents list
     opponent = (
@@ -393,6 +401,7 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
     return json({
         "games_played": games_played,
         "games_won": len(games_won),
-        "percentage_of_playing_white": (len(games_played_white) / games_played * 100) if games_played else 0,  # to stop zero division errors
+        # to stop zero division errors
+        "percentage_of_playing_white": (len(games_played_white) / games_played * 100) if games_played else 0,
         "favourite_opponent": opponent.to_dict_generalised() if opponent else None,
     })

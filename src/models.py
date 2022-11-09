@@ -10,8 +10,8 @@ import arrow
 import chess
 import chess.pgn
 
-from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func, select, and_
-from sqlalchemy.orm import declarative_base, relationship, column_property
+from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.dialects.mysql.types import INTEGER
 
 from sqlalchemy_utils import PasswordType, EmailType, ArrowType, force_auto_coercion
@@ -89,7 +89,7 @@ class User(BaseModel):
     user_id: int = Column(INTEGER(unsigned=True), primary_key=True, comment="User ID")
 
     username: str = Column(String(63), nullable=False, unique=True, comment="Username")
-    password = Column(
+    password: str = Column(
         PasswordType(schemes=["pbkdf2_sha512"]), nullable=False, comment="Password"
     )
 
@@ -97,7 +97,7 @@ class User(BaseModel):
         INTEGER(unsigned=True), nullable=False, default=400, comment="Player score"
     )
 
-    email: str = Column(EmailType(length=127), nullable=True, comment="Email address")
+    email: Optional[str] = Column(EmailType(length=127), nullable=True, comment="Email address")
 
     time_created: arrow.Arrow = Column(
         ArrowType,
