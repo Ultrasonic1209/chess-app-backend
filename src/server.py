@@ -119,7 +119,7 @@ async def inject_session(request: Request):
     Adds a SQL session to the request's context
     From https://sanic.dev/en/guide/how-to/orm.html#sqlalchemy
     """
-    request.ctx.session = local_session()
+    request.ctx.session = local_session() # type: ignore
 
 
 @app.middleware("response")
