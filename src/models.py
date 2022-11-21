@@ -1,7 +1,7 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from typing import List, Optional, Union
+from typing import List, Optional
 from email.headerregistry import Address
 from io import StringIO
 import hashlib
@@ -48,7 +48,7 @@ def censor_email(email: Optional[str] = None):
 ANONYMOUS_IMG = "https://dev.chessapp.ultras-playroom.xyz/maskable_icon.png"
 
 
-def hash_email(email: Union[str, None]):
+def hash_email(email: Optional[str]):
     """
     Takes an email and returns a hash for use for Gravatar
     """
