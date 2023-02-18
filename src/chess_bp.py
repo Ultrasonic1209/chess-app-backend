@@ -84,7 +84,7 @@ async def get_games(
     """
 
     # issue with parsing of options unfortunately
-    #options = dict(request.query_args) # type: ignore
+    options = dict(request.query_args) # type: ignore
     # get all game ids that the requesting user is participating in
     query_users_game_ids = select(models.Player.game_id).where(
         models.Player.user == user
