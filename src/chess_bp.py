@@ -15,7 +15,6 @@ from sanic.response import empty, json
 # from sanic.log import logger
 from sanic_ext import openapi, validate
 from sqlalchemy import or_, select
-from sqlalchemy.sql.expression import Select
 
 import models
 from auth import has_session
@@ -88,16 +87,16 @@ async def get_games(
     options = dict(request.query_args)
 
     # get all game ids that the requesting user is participating in
-    query_users_game_ids: Select = select(models.Player.game_id).where(
+    query_users_game_ids = select(models.Player.game_id).where(
         models.Player.user == user
     )
 
     # get all game ids that the requesting session is participating in
-    query_session_game_ids: Select = select(models.Player.game_id).where(
+    query_session_game_ids = select(models.Player.game_id).where(
         models.Player.session == session
     )
 
-    stmt: Select = select(models.Game)
+    stmt = select(models.Game)
 
     # limits the database response size to what the requesting client wants.
     # in order to give the the impression of pagination, offset will also be used
@@ -160,7 +159,7 @@ async def create_game(
     """
     query_session = request.ctx.session
 
-    gtstmt: Select = select(models.GameTimer).where(
+    gtstmt = select(models.GameTimer).where(
         models.GameTimer.timer_name
         == ("Countdown" if options.countingDown else "Countup")
     )

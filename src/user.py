@@ -13,7 +13,7 @@ import jwt
 from sanic import Blueprint, json
 from sanic_ext import openapi, validate
 from sqlalchemy import exc, select
-from sqlalchemy.sql.expression import Select, or_
+from sqlalchemy.sql.expression import or_
 from sqlalchemy.sql.functions import count
 
 import models
@@ -311,19 +311,19 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             None,
         )
 
-    query_game_amount: Select = select(
+    query_game_amount = select(
         count(models.Game.game_id)
     )  # SELECT COUNT(`Game`.game_id)
 
-    query_games: Select = select(models.Game)  # SELECT `Game`.*
+    query_games = select(models.Game)  # SELECT `Game`.*
 
     # get all game ids that the requesting user is participating in
-    query_users_game_ids: Select = select(models.Player.game_id).where(
+    query_users_game_ids = select(models.Player.game_id).where(
         models.Player.user == user
     )
 
     # get all game ids that the requesting session is participating in
-    query_session_game_ids: Select = select(models.Player.game_id).where(
+    query_session_game_ids = select(models.Player.game_id).where(
         models.Player.session == session
     )
 

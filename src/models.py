@@ -158,7 +158,7 @@ class Session(BaseModel):
         comment="Session Token (Password for machines)",
     )
 
-    user_id: Mapped[int] = mapped_column(
+    user_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("User.user_id"), nullable=True, comment="Linked User ID"
     )
 
@@ -274,7 +274,7 @@ class Game(BaseModel):
         INTEGER(unsigned=True), primary_key=True, comment="Game ID"
     )
 
-    game: Mapped[str] = mapped_column(
+    game: Mapped[Optional[str]] = mapped_column(
         String(8192),
         nullable=True,
         comment="Holds game metadata and a list of moves made",
