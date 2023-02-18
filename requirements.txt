@@ -1,11 +1,33 @@
-sanic[ext]
-chess
-pyjwt
-gitpython
-httpx
-python-dotenv
-asyncmy
-sqlalchemy
-sqlalchemy_utils
-passlib
-arrow
+-i https://pypi.org/simple
+aiofiles==23.1.0 ; python_version >= '3.7' and python_version < '4.0'
+anyio==3.6.2 ; python_full_version >= '3.6.2'
+arrow==1.2.3
+asyncmy==0.2.7
+certifi==2022.12.7 ; python_version >= '3.6'
+chess==1.9.4
+gitdb==4.0.10 ; python_version >= '3.7'
+gitpython==3.1.31
+greenlet==2.0.2 ; python_version >= '3' and platform_machine == 'aarch64' or (platform_machine == 'ppc64le' or (platform_machine == 'x86_64' or (platform_machine == 'amd64' or (platform_machine == 'AMD64' or (platform_machine == 'win32' or platform_machine == 'WIN32')))))
+h11==0.14.0 ; python_version >= '3.7'
+httpcore==0.16.3 ; python_version >= '3.7'
+httptools==0.5.0 ; python_full_version >= '3.5.0'
+httpx==0.23.3
+idna==3.4
+multidict==6.0.4 ; python_version >= '3.7'
+passlib==1.7.4
+pyjwt==2.6.0
+python-dateutil==2.8.2 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
+python-dotenv==0.21.1
+pyyaml==6.0 ; python_version >= '3.6'
+rfc3986[idna2008]==1.5.0
+sanic[ext]==22.12.0
+sanic-ext==22.12.0
+sanic-routing==22.8.0
+six==1.16.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
+smmap==5.0.0 ; python_version >= '3.6'
+sniffio==1.3.0 ; python_version >= '3.7'
+sqlalchemy==1.4.46
+sqlalchemy-utils==0.40.0
+ujson==5.7.0 ; sys_platform != 'win32' and implementation_name == 'cpython'
+uvloop==0.17.0 ; sys_platform != 'win32' and implementation_name == 'cpython'
+websockets==10.4 ; python_version >= '3.7'
