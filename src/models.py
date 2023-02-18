@@ -45,14 +45,11 @@ def censor_email(email: Optional[str] = None):
 ANONYMOUS_IMG = "https://dev.chessapp.ultras-playroom.xyz/maskable_icon.png"
 
 
-def hash_email(email: Optional[str]):
+def hash_email(email: str = ""):
     """
     Takes an email and returns a hash for use for Gravatar
     """
-    if email is None:
-        email = ""
-    email = email.strip().lower().encode("utf-8")
-    return hashlib.md5(email).hexdigest()
+    return hashlib.md5(email.strip().lower().encode("utf-8")).hexdigest()
 
 
 class BaseModel(DeclarativeBase):
@@ -227,15 +224,14 @@ class Player(BaseModel):
 
     session: Mapped[Session] = relationship("Session", uselist=False, lazy=_LAZYMETHOD)
 
-    def to_dict(self) -> classes.PublicChessPlayer:
-        return {
-            "userId": self.user_id,
-            "username": self.user.username if self.user else None,
-            "game_id": self.game_id,
-            "is_white": self.is_white,
-            "rank": self.user.score if self.user else None,
-            "avatar_hash": self.get_avatar_hash(),
-        }
+    def to_dict(self):
+        return classes.PublicChessPlayer(
+            userId = self.user_id,
+            username = self.user.username if self.user else None,
+            isWhite = self.is_white,
+            rank = self.user.score if self.user else None,
+            avatar_hash = self.get_avatar_hash(),
+        )
 
     def to_dict_generalised(self):
         """
@@ -323,7 +319,7 @@ class Game(BaseModel):
         game = chessgame or chess.pgn.read_game(StringIO(self.game))
         old_white_won = self.white_won
 
-        if self.time_started:
+        if self.time_started and game:
             if outcome := game.end().board().outcome():
                 game.headers["Result"] = outcome.result()
                 game.headers["Termination"] = "normal"
@@ -331,7 +327,7 @@ class Game(BaseModel):
                 self.time_ended = arrow.now()
                 self.white_won = outcome.winner
             elif (
-                self.timer.timer_name == "Countdown"
+                self.timer.timer_name == "Countdown" and self.timeLimit
             ):  # check if players are out of time
                 seconds_since_start = (arrow.now() - self.time_started).total_seconds()
 
@@ -378,12 +374,12 @@ class Game(BaseModel):
         if self.white_won != old_white_won:  # change the players' ranks!
             for player in self.players:
                 if player.is_white:
-                    white = player
+                    whitePlayer = player
                 else:
-                    black = player
+                    blackPlayer = player
 
-            winner = white if self.white_won else black
-            loser = black if self.white_won else white
+            winner = whitePlayer if self.white_won else blackPlayer
+            loser = blackPlayer if self.white_won else whitePlayer
 
             if winning_user := winner.user:
                 winning_user.score += 1

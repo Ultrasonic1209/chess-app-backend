@@ -4,13 +4,14 @@ From https://sanic.dev/en/guide/how-to/authentication.html#auth.py
 import secrets
 from datetime import datetime
 from functools import wraps
-from typing import Optional
+from typing import Optional, Any, Tuple, Dict
 from urllib.parse import urlparse
 
 import jwt
 
 import sanic
 from sanic import json, text
+from sanic.response import BaseHTTPResponse
 
 # from sanic.log import logger
 from sqlalchemy import select
@@ -20,7 +21,7 @@ from classes import Request, Token
 from models import Session, User
 
 
-def get_hostname(url, uri_type="netloc_only"):
+def get_hostname(url: str, uri_type: str="netloc_only"):
     """Get the host name from the url"""
     parsed_uri = urlparse(url)
     if uri_type == "both":
@@ -42,7 +43,7 @@ def check_token(request: Request) -> Optional[Token]:
     try:
         # i shouldnt need to unpack the jwt here but it keeps the typechecker happy
         return Token(
-            **jwt.decode(jwt=token, key=request.app.config.SECRET, algorithms=["HS256"])
+            **jwt.decode(jwt=token, key=request.app.config.SECRET, algorithms=["HS256"]) # type: ignore
         )
     except jwt.exceptions.InvalidTokenError:
         return None
@@ -90,12 +91,12 @@ def is_logged_in(silent: bool = False):
 
     def decorator(func):
         @wraps(func)
-        async def decorated_function(request: Request, *args, **kwargs):
+        async def decorated_function(request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]):
             user, session = await authenticate_request(request=request)
 
             if user:
-                response = await func(
-                    request, *args, **kwargs, user=user, session=session
+                response: BaseHTTPResponse = await func(
+                    request, *args, **kwargs, user=user, session=session # type: ignore
                 )
                 return response
             else:
@@ -119,7 +120,7 @@ def has_session(create: bool = True):
 
     def decorator(func):
         @wraps(func)
-        async def decorated_function(request: Request, *args, **kwargs):
+        async def decorated_function(request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]):
             user, session = await authenticate_request(request=request)
 
             if session is None:
@@ -137,7 +138,7 @@ def has_session(create: bool = True):
                     await query_session.refresh(session)
 
                 response: sanic.HTTPResponse = await func(
-                    request, *args, **kwargs, user=user, session=session
+                    request, *args, **kwargs, user=user, session=session # type: ignore
                 )
 
                 async with query_session.begin():
@@ -155,7 +156,7 @@ def has_session(create: bool = True):
                 return response
             else:
                 response = await func(
-                    request, *args, **kwargs, user=user, session=session
+                    request, *args, **kwargs, user=user, session=session # type: ignore
                 )
                 return response
 

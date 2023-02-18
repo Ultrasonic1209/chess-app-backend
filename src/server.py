@@ -5,7 +5,7 @@ import os
 import re
 from textwrap import dedent
 
-import git
+from git.repo import Repo
 import httpx
 from dotenv import load_dotenv
 from sanic import json, text
@@ -30,7 +30,7 @@ load_dotenv()
 
 ISDEV = bool(os.getenv("DEV")) or (os.getenv("GITHUB_CODESPACE_TOKEN") and True)
 
-repo = git.Repo(search_parent_directories=True)
+repo = Repo(search_parent_directories=True)
 sha = repo.head.object.hexsha
 
 app = App("CheckmateBackend")

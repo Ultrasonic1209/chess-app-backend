@@ -84,8 +84,7 @@ async def get_games(
     """
 
     # issue with parsing of options unfortunately
-    options = dict(request.query_args)
-
+    #options = dict(request.query_args) # type: ignore
     # get all game ids that the requesting user is participating in
     query_users_game_ids = select(models.Player.game_id).where(
         models.Player.user == user
@@ -101,11 +100,11 @@ async def get_games(
     # limits the database response size to what the requesting client wants.
     # in order to give the the impression of pagination, offset will also be used
     # to move the database cursor along based off of the given page size.
-    stmt = stmt.limit(int(options["page_size"])).offset(
-        int(options["page"]) * int(options["page_size"])
+    stmt = stmt.limit(int(options.page_size)).offset(
+        int(options.page) * int(options.page_size)
     )
 
-    if bool(strtobool(options["my_games"])) is True:
+    if options.my_games is True:
         if (
             user
         ):  # set the query to use both subqueries with an OR operator if the requesting session has a user
@@ -125,16 +124,18 @@ async def get_games(
 
     games = game_result.scalars().all()
 
-    async def process_game(game: models.Game) -> PublicChessGameResponse:
+    async def process_game(game: models.Game):
         """
         Sets the `is_white` flag for games.
         """
         await game.hospice()
 
-        dictgame = game.to_dict()
+        processed = PublicChessGameResponse(
+            **game.to_dict(),
+            is_white=get_player_team(game=game, session=session, user=user)
+        )
 
-        dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
-        return dictgame
+        return processed
 
     formattedgames: List[PublicChessGameResponse] = [
         await process_game(game) for game in games
@@ -178,7 +179,7 @@ async def create_game(
         player.is_white = options.creatorStartsWhite
 
         player.user = user
-        player.session = session if user is None else None
+        player.session = session
 
         game = models.Game()
         game.timer = game_timer
@@ -247,7 +248,7 @@ async def enter_game(
     query_session = request.ctx.session
 
     async with query_session.begin():
-        game: Optional[models.Game] = await query_session.get(
+        game = await query_session.get(
             models.Game, gameid, populate_existing=True
         )
 
@@ -270,32 +271,26 @@ async def enter_game(
         player.game = game
 
         player.user = user
-        player.session = session if session.user is None else None
+        player.session = session
 
         player.is_white = wants_white
 
         query_session.add(player)
 
-        if len(game.players) == 2:
+        white = await query_session.get(models.Player, (gameid, True))
+        black = await query_session.get(models.Player, (gameid, False))
+
+        if white and black:
             # start the game!
 
             time = arrow.now()
-
-            white: models.Player
-            black: models.Player
-
-            for player in game.players:
-                if player.is_white:
-                    white = player
-                else:
-                    black = player
 
             pgn = chess.pgn.Game(
                 {
                     "Event": "Checkmate Chess Game",
                     "Site": "chessapp.ultras-playroom.xyz",
                     "Date": time.strftime(r"%Y.%m.%d"),
-                    "Round": 1,
+                    "Round": "1",
                     "White": white.user.username if white.user else "Anonymous",
                     "Black": black.user.username if black.user else "Anonymous",
                     "Result": "*",

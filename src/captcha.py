@@ -2,10 +2,11 @@
 Responsible for captcha validation.
 """
 from functools import wraps
-from typing import Any
+from typing import Any, Tuple, Dict
 
 from sanic import json
 from sanic.log import logger
+from sanic.response import BaseHTTPResponse
 
 from httpx._models import Response
 
@@ -29,7 +30,7 @@ async def verify_captcha(
         },
     )
 
-    resp_body: dict = resp.json()
+    resp_body: dict[str, Any] = resp.json()
 
     toreturn: dict[str, Any]
 
@@ -102,7 +103,7 @@ def validate_request_captcha(success_facing_message: str = "Success!"):
 
     def decorator(func):
         @wraps(func)
-        async def decorated_function(request: Request, *args, **kwargs):
+        async def decorated_function(request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]):
 
             given_solution = request.json.get("frcCaptchaSolution")
 
@@ -125,8 +126,8 @@ def validate_request_captcha(success_facing_message: str = "Success!"):
             )
 
             if accept:
-                response = await func(
-                    request, *args, **kwargs, user_facing_message=user_facing_message
+                response: BaseHTTPResponse = await func(
+                    request, *args, **kwargs, user_facing_message=user_facing_message # type: ignore
                 )
                 return response
             else:
