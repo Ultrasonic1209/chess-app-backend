@@ -1,7 +1,7 @@
 """
 Will handle everything related to chess games.
 """
-import random
+import random, typing
 from io import StringIO
 from typing import List, Optional
 
@@ -75,7 +75,7 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
 @has_session()
 async def get_games(
     request: Request,
-    options: GetGameOptions,
+    optionss: GetGameOptions,
     user: models.User,
     session: models.Session,
 ):
@@ -84,7 +84,7 @@ async def get_games(
     """
 
     # issue with parsing of options unfortunately
-    options = dict(request.query_args) # type: ignore
+    options: typing.Dict[str, typing.Any] = dict(request.query_args) # type: ignore
     # get all game ids that the requesting user is participating in
     query_users_game_ids = select(models.Player.game_id).where(
         models.Player.user == user
@@ -100,11 +100,11 @@ async def get_games(
     # limits the database response size to what the requesting client wants.
     # in order to give the the impression of pagination, offset will also be used
     # to move the database cursor along based off of the given page size.
-    stmt = stmt.limit(int(options.page_size)).offset(
-        int(options.page) * int(options.page_size)
+    stmt = stmt.limit(int(options["page_size"])).offset(
+        int(options["page"]) * int(options["page_size"])
     )
 
-    if options.my_games is True:
+    if bool(strtobool(options["my_games"])) is True:
         if (
             user
         ):  # set the query to use both subqueries with an OR operator if the requesting session has a user
