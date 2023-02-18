@@ -90,7 +90,9 @@ async def verify_captcha(
 
 def validate_request_captcha(success_facing_message: str = "Success!"):
     """
-    Ensures all requests to anything wrapped with this decorator have a valid captcha token associated.
+    Ensures all requests to anything wrapped with this decorator
+    has a valid captcha token.
+    
     Request body should have a `frcCaptchaSolution` element.
 
     Adds a kwarg `user_facing_message` to the request callback

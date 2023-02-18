@@ -204,7 +204,7 @@ async def index(request: Request):
     resp = dedent(
         """
         Welcome to Checkmate's backend API.
-        Please navigate to https://api-chessapp.server.ultras-playroom.xyz/docs for documentation.
+        Docs: https://api-chessapp.server.ultras-playroom.xyz/docs
         """
     )
 

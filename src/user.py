@@ -116,7 +116,7 @@ async def do_login(
 @is_logged_in(silent=True)
 async def do_logout(request: Request, user: models.User, session: models.Session):
     """
-    Removes JSON Web Token and destroys the session (if there are zero games associated with it).
+    Removes JSON Web Token and destroys the session if it has no games.
     """
     query_session = request.ctx.session
 
@@ -187,8 +187,9 @@ async def new_user(
             user.password = params.password
 
             try:
-                # python has a module for handling email, i see no reason why i can't use it
-                # if the email field isnt blank then attempt to parse, else null the field in the database
+                # there's a module for handling email, i see no reason why i can't use
+                # it. if the email field isnt blank then attempt to parse, else null the
+                # field in the database.
                 user.email = (
                     str(Address(addr_spec=params.email)) if params.email != "" else None
                 )

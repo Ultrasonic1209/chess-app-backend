@@ -1,6 +1,6 @@
 [tool.ruff]
 
 ignore = [
-  "E501", # line length violations
+  #"E501", # line length violations
   "E999", # Syntax Error as it doesnt understand match commands from Python 3.10+
 ]

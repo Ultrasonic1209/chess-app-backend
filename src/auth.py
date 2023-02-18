@@ -111,7 +111,8 @@ def is_logged_in(silent: bool = False):
 
 def has_session(create: bool = True):
     """
-    Ensures all requests to anything wrapped with this decorator has a session, creating one if necessary.
+    Ensures all requests to anything wrapped with this decorator has a session
+    A session will be created automatically if `create = True`
     Passes a user as well
     will set a cookie!
     """
@@ -149,7 +150,6 @@ def has_session(create: bool = True):
                 response.cookies[".CHECKMATESECRET"] = token
                 response.cookies[".CHECKMATESECRET"]["secure"] = True
                 response.cookies[".CHECKMATESECRET"]["samesite"] = "None"
-                # response.cookies[".CHECKMATESECRET"]["domain"] = get_hostname(request.headers.get("host", ""))
                 response.cookies[".CHECKMATESECRET"]["comment"] = "aaaaaaa"
 
                 return response
