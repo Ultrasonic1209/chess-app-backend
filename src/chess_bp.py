@@ -188,7 +188,7 @@ async def create_game(
 
         query_session.add_all([player, game])
 
-    response = json(dict(game_id=game.game_id), status=201)
+    response = json({"game_id": game.game_id}, status=201)
 
     return response
 
