@@ -75,7 +75,7 @@ def get_player_team(game: models.Game, session: models.Session, user: models.Use
 @has_session()
 async def get_games(
     request: Request,
-    optionss: GetGameOptions,
+    options: GetGameOptions,
     user: models.User,
     session: models.Session,
 ):
