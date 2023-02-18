@@ -2,25 +2,27 @@
 Contains the sanic app that should be run.
 """
 import os
-from textwrap import dedent
 import re
+from textwrap import dedent
 
 import git
 import httpx
+import models
 from dotenv import load_dotenv
-
-from sqlalchemy import inspect
-from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine, async_sessionmaker
-
 from sanic import json, text
 from sanic.worker.manager import WorkerManager
 from sanic_ext.extensions.openapi import constants
+from sqlalchemy import inspect
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
+    async_sessionmaker,
+    create_async_engine,
+)
 
-import models
-from classes import App, AppConfig, Request
 from chess_bp import chess_blueprint as chessBp
-from user import user_bp
+from classes import App, AppConfig, Request
 from misc import misc
+from user import user_bp
 
 WorkerManager.THRESHOLD = 100  # Value is in 0.1s
 
@@ -54,8 +56,8 @@ app.extend(
             ),  # gh codespace web previews
             re.compile(
                 r"https://ultrasonic1209-(.*)\.preview\.app\.github\.dev"
-            ),   # gh codespace web previews (2)
-            "http://localhost:3000" # tauri demo on linux
+            ),  # gh codespace web previews (2)
+            "http://localhost:3000",  # tauri demo on linux
         ],  # re.compile(r"^((.*)ultras-playroom\.xyz)|(tauri\.localhost)")
         cors_supports_credentials=True,
         cors_allow_headers=["content-type"],
@@ -92,7 +94,7 @@ bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
     echo=ISDEV,
     pool_recycle=3600,
-    future=True
+    future=True,
 )
 
 app.config.SECRET = os.getenv("JWT_SECRET", "")
@@ -119,7 +121,7 @@ async def inject_session(request: Request):
     Adds a SQL session to the request's context
     From https://sanic.dev/en/guide/how-to/orm.html#sqlalchemy
     """
-    request.ctx.session = local_session() # type: ignore
+    request.ctx.session = local_session()  # type: ignore
 
 
 @app.middleware("response")
@@ -210,17 +212,14 @@ async def index(request: Request):
 
 
 app.static(
-    uri="/static",
-    file_or_directory="./static",
-    name="static",
-    use_modified_since=True
+    uri="/static", file_or_directory="./static", name="static", use_modified_since=True
 )
 
 app.static(
     uri="/favicon.ico",
     file_or_directory="./static/favicon.ico",
     name="favicon",
-    use_modified_since=True
+    use_modified_since=True,
 )
 
 if __name__ == "__main__":

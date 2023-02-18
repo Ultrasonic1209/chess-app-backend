@@ -4,30 +4,27 @@ Captcha process influenced by
 https://github.com/FriendlyCaptcha/friendly-captcha-examples/blob/main/nextjs/pages/api/submitBasic.js
 """
 
-from datetime import datetime, timedelta
 import email.errors
+from datetime import datetime, timedelta
 from email.headerregistry import Address
 from statistics import mode
 
 import jwt
-
 from sanic import Blueprint, json
-from sanic_ext import validate, openapi
-
-from sqlalchemy import select
+from sanic_ext import openapi, validate
+from sqlalchemy import exc, select
 from sqlalchemy.sql.expression import Select, or_
-from sqlalchemy.engine import Result
 from sqlalchemy.sql.functions import count
-from sqlalchemy import exc
 
-from auth import is_logged_in, has_session
+import models
+from auth import has_session, is_logged_in
 from captcha import validate_request_captcha
 from classes import (
+    LoginBody,
+    LoginResponse,
     Message,
     MessageWithAccept,
     Request,
-    LoginBody,
-    LoginResponse,
     SignupBody,
     SignupResponse,
     StatsResponse,
@@ -35,10 +32,8 @@ from classes import (
     UpdateResponse,
 )
 
-import models
 
 user_bp = Blueprint("user", url_prefix="/user")
-
 
 @user_bp.post("/login")
 @openapi.body(LoginBody)
@@ -90,12 +85,14 @@ async def do_login(
         resp_user.sessions.append(session)
 
     expires = (
-        (datetime.now() + timedelta(weeks=4)
-         ).timestamp() if params.rememberMe else None
+        (datetime.now() + timedelta(weeks=4)).timestamp() if params.rememberMe else None
     )
 
-    payload = {"user_id": resp_user.user_id,
-               "session": session.session, "expires": expires}
+    payload = {
+        "user_id": resp_user.user_id,
+        "session": session.session,
+        "expires": expires,
+    }
 
     response = json(
         {"accept": True, "message": user_facing_message, "profile": resp_user.to_dict()}
@@ -124,14 +121,12 @@ async def do_logout(request: Request, user: models.User, session: models.Session
     query_session = request.ctx.session
 
     if len(session.players) == 0:
-
         async with query_session.begin():
             await query_session.delete(session)
 
         response = json({"success": True})
         del response.cookies[".CHECKMATESECRET"]
     else:
-
         async with query_session.begin():
             session.user = None
 
@@ -181,7 +176,9 @@ async def new_user(
     query_session = request.ctx.session
     try:
         async with query_session.begin():
-            user = models.User()  # see diagram at top of Classes/OOP section of documentation
+            user = (
+                models.User()
+            )  # see diagram at top of Classes/OOP section of documentation
 
             # params is the parsed HTTP POST body, as a Python dataclass
             # the username and password has to be set to this
@@ -193,10 +190,11 @@ async def new_user(
                 # python has a module for handling email, i see no reason why i can't use it
                 # if the email field isnt blank then attempt to parse, else null the field in the database
                 user.email = (
-                    str(Address(addr_spec=params.email)
-                        ) if params.email != "" else None
+                    str(Address(addr_spec=params.email)) if params.email != "" else None
                 )
-            except email.errors.InvalidHeaderDefect:  # it even has its own exceptions for error handling!
+            except (
+                email.errors.InvalidHeaderDefect
+            ):  # it even has its own exceptions for error handling!
                 return json(
                     {"accept": False, "message": "An invalid email was provided."},
                     status=400,
@@ -288,10 +286,9 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             # remove players that DO have the requesting session (or user)'s id
             # returns an iterator containing a single player
             filter(
-                lambda player: (player.user_id == (
-                    user.user_id if user else -1))
+                lambda player: (player.user_id == (user.user_id if user else -1))
                 or (player.session_id == session.session_id),
-                game.players
+                game.players,
             ),
             None,
         )
@@ -307,8 +304,7 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
             # remove players that do NOT have the requesting session (or user)'s id
             # returns an iterator containing a single player
             filter(
-                lambda player: (player.user_id != (
-                    user.user_id if user else -1))
+                lambda player: (player.user_id != (user.user_id if user else -1))
                 and (player.session_id != session.session_id),
                 game.players,
             ),
@@ -316,23 +312,24 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
         )
 
     query_game_amount: Select = select(
-        count(models.Game.game_id))  # SELECT COUNT(`Game`.game_id)
+        count(models.Game.game_id)
+    )  # SELECT COUNT(`Game`.game_id)
 
     query_games: Select = select(models.Game)  # SELECT `Game`.*
 
     # get all game ids that the requesting user is participating in
-    query_users_game_ids: Select = (
-        select(models.Player.game_id)
-        .where(models.Player.user == user)
+    query_users_game_ids: Select = select(models.Player.game_id).where(
+        models.Player.user == user
     )
 
     # get all game ids that the requesting session is participating in
-    query_session_game_ids: Select = (
-        select(models.Player.game_id)
-        .where(models.Player.session == session)
+    query_session_game_ids: Select = select(models.Player.game_id).where(
+        models.Player.session == session
     )
 
-    if user:  # set the query to use both subqueries with an OR operator if the requesting session has a user
+    if (
+        user
+    ):  # set the query to use both subqueries with an OR operator if the requesting session has a user
         exp = or_(
             models.Game.__table__.columns.game_id.in_(query_session_game_ids),
             models.Game.__table__.columns.game_id.in_(query_users_game_ids),
@@ -361,12 +358,12 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
     games_won = list(
         filter(
             lambda game: getattr(get_player(game), "is_white", None) == game.white_won,
-            game_results  # from the list of game results, remove those that the user did not win
+            game_results,  # from the list of game results, remove those that the user did not win
         )
     )
 
     # from the list of game results, "filter" out those that the user was playing black in
-    games_played_black = list(
+    list(
         filter(
             lambda game: getattr(get_player(game), "is_white", None) is False,
             game_results,
@@ -383,18 +380,23 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
 
     # get all opponents to all the games that the player has played, then
     # "filter" out the opponents belonging to games that have none (remove all of the None entries)
-    opponents = tuple(filter(None, (get_opponent(game)
-                      for game in game_results)))
+    opponents = tuple(filter(None, (get_opponent(game) for game in game_results)))
 
     # gets the most common opponent in the opponents list
     opponent = (
         mode(opponents) if opponents else None
     )  # checks if empty, tuple/list objects evaluate to False if they are
 
-    return json({
-        "games_played": games_played,
-        "games_won": len(games_won),
-        # to stop zero division errors
-        "percentage_of_playing_white": (len(games_played_white) / games_played * 100) if games_played else 0,
-        "favourite_opponent": opponent.to_dict_generalised() if opponent else None,
-    })
+    return json(
+        {
+            "games_played": games_played,
+            "games_won": len(games_won),
+            # to stop zero division errors
+            "percentage_of_playing_white": (
+                len(games_played_white) / games_played * 100
+            )
+            if games_played
+            else 0,
+            "favourite_opponent": opponent.to_dict_generalised() if opponent else None,
+        }
+    )

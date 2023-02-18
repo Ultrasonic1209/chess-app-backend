@@ -1,28 +1,19 @@
 """
 Represents the database as a bunch of Python objects.
 """
-from typing import List, Optional
+import hashlib
 from email.headerregistry import Address
 from io import StringIO
-import hashlib
+from typing import List, Optional
 
 import arrow
 import chess
 import chess.pgn
-
-from sqlalchemy import ForeignKey
-from sqlalchemy import String
-from sqlalchemy import Boolean
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import DeclarativeBase
-
-from sqlalchemy.sql import functions
-
+from sqlalchemy import Boolean, ForeignKey, String
 from sqlalchemy.dialects.mysql.types import INTEGER
-
-from sqlalchemy_utils import PasswordType, EmailType, ArrowType, force_auto_coercion
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.sql import functions
+from sqlalchemy_utils import ArrowType, EmailType, PasswordType, force_auto_coercion
 
 import classes
 
@@ -92,9 +83,13 @@ class User(BaseModel):
         if self.email:
             return hash_email(self.email)
 
-    user_id: Mapped[int] = mapped_column(INTEGER(unsigned=True), primary_key=True, comment="User ID")
+    user_id: Mapped[int] = mapped_column(
+        INTEGER(unsigned=True), primary_key=True, comment="User ID"
+    )
 
-    username: Mapped[str] = mapped_column(String(63), nullable=False, unique=True, comment="Username")
+    username: Mapped[str] = mapped_column(
+        String(63), nullable=False, unique=True, comment="Username"
+    )
     password: Mapped[str] = mapped_column(
         PasswordType(schemes=["pbkdf2_sha512"]), nullable=False, comment="Password"
     )
@@ -103,7 +98,9 @@ class User(BaseModel):
         INTEGER(unsigned=True), nullable=False, default=400, comment="Player score"
     )
 
-    email: Mapped[Optional[str]] = mapped_column(EmailType(length=127), nullable=True, comment="Email address")
+    email: Mapped[Optional[str]] = mapped_column(
+        EmailType(length=127), nullable=True, comment="Email address"
+    )
 
     time_created: Mapped[arrow.Arrow] = mapped_column(
         ArrowType,
@@ -112,9 +109,13 @@ class User(BaseModel):
         comment="Account creation timestamp",
     )
 
-    players: Mapped[List["Player"]] = relationship("Player", back_populates="user", lazy=_LAZYMETHOD)
+    players: Mapped[List["Player"]] = relationship(
+        "Player", back_populates="user", lazy=_LAZYMETHOD
+    )
 
-    sessions: Mapped[List["Session"]] = relationship("Session", back_populates="user", lazy=_LAZYMETHOD)
+    sessions: Mapped[List["Session"]] = relationship(
+        "Session", back_populates="user", lazy=_LAZYMETHOD
+    )
 
     def to_dict(self):
         return {
@@ -130,10 +131,10 @@ class User(BaseModel):
         Like `to_dict` but public!
         """
         return classes.PublicChessEntityDict(
-            name = self.username,
-            avatar_hash = self.get_avatar_hash(),
-            rank = self.score,
-            time_created = self.time_created.isoformat(),
+            name=self.username,
+            avatar_hash=self.get_avatar_hash(),
+            rank=self.score,
+            time_created=self.time_created.isoformat(),
         )
 
 
@@ -165,18 +166,18 @@ class Session(BaseModel):
         "User", back_populates="sessions", uselist=False, lazy=_LAZYMETHOD
     )
 
-    players: Mapped[List["Player"]] = relationship("Player", back_populates="session", lazy=_LAZYMETHOD)
+    players: Mapped[List["Player"]] = relationship(
+        "Player", back_populates="session", lazy=_LAZYMETHOD
+    )
 
     def public_to_dict(self) -> classes.PublicChessEntityDict:
         """
         Like `to_dict` but public!
         """
         return classes.PublicChessEntityDict(
-            name=None,
-            avatar_hash=None,
-            rank=None,
-            time_created=None
+            name=None, avatar_hash=None, rank=None, time_created=None
         )
+
 
 class Player(BaseModel):
     """
@@ -240,7 +241,9 @@ class Player(BaseModel):
         """
         like to_dict but returns something not related to a game!
         """
-        return self.user.public_to_dict() if self.user else self.session.public_to_dict()
+        return (
+            self.user.public_to_dict() if self.user else self.session.public_to_dict()
+        )
 
 
 class GameTimer(BaseModel):
@@ -251,9 +254,13 @@ class GameTimer(BaseModel):
 
     __tablename__ = "GameTimer"
 
-    timer_id: Mapped[int] = mapped_column(INTEGER(unsigned=True), primary_key=True, comment="Timer ID")
+    timer_id: Mapped[int] = mapped_column(
+        INTEGER(unsigned=True), primary_key=True, comment="Timer ID"
+    )
 
-    timer_name: Mapped[str] = mapped_column(String(15), nullable=False, comment="Timer Name")
+    timer_name: Mapped[str] = mapped_column(
+        String(15), nullable=False, comment="Timer Name"
+    )
 
 
 class Game(BaseModel):
@@ -263,7 +270,9 @@ class Game(BaseModel):
 
     __tablename__ = "Game"
 
-    game_id: Mapped[int] = mapped_column(INTEGER(unsigned=True), primary_key=True, comment="Game ID")
+    game_id: Mapped[int] = mapped_column(
+        INTEGER(unsigned=True), primary_key=True, comment="Game ID"
+    )
 
     game: Mapped[str] = mapped_column(
         String(8192),
@@ -293,13 +302,17 @@ class Game(BaseModel):
         comment="The amount of time each player gets",
     )
 
-    timer: Mapped[GameTimer] = relationship("GameTimer", uselist=False, lazy=_LAZYMETHOD)
+    timer: Mapped[GameTimer] = relationship(
+        "GameTimer", uselist=False, lazy=_LAZYMETHOD
+    )
 
     players: Mapped[List[Player]] = relationship(
         "Player", back_populates="game", lazy=_LAZYMETHOD
     )
 
-    async def hospice(self, chessgame: Optional[chess.pgn.Game] = None, force_save: bool = False):
+    async def hospice(
+        self, chessgame: Optional[chess.pgn.Game] = None, force_save: bool = False
+    ):
         """
         If the game should end, make it end.
         """
@@ -317,7 +330,9 @@ class Game(BaseModel):
 
                 self.time_ended = arrow.now()
                 self.white_won = outcome.winner
-            elif self.timer.timer_name == "Countdown": # check if players are out of time
+            elif (
+                self.timer.timer_name == "Countdown"
+            ):  # check if players are out of time
                 seconds_since_start = (arrow.now() - self.time_started).total_seconds()
 
                 times = [node.clock() - self.timeLimit for node in game.mainline()]
@@ -330,7 +345,6 @@ class Game(BaseModel):
                 last_time = self.timeLimit
 
                 for time in times:
-
                     if is_white:
                         white += last_time - time
                     elif not is_white:
@@ -361,7 +375,7 @@ class Game(BaseModel):
                     self.time_ended = arrow.now()
                     self.white_won = True
 
-        if self.white_won != old_white_won: # change the players' ranks!
+        if self.white_won != old_white_won:  # change the players' ranks!
             for player in self.players:
                 if player.is_white:
                     white = player
@@ -385,7 +399,6 @@ class Game(BaseModel):
             pgn_string = game.accept(exporter)
 
             self.game = pgn_string
-
 
     def to_dict(self):
         # this is technically the more "correct" way to go around this it seems

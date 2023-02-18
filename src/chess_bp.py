@@ -1,40 +1,37 @@
 """
 Will handle everything related to chess games.
 """
-from io import StringIO
 import random
+from io import StringIO
 from typing import List, Optional
 
+import arrow
 import chess
 import chess.pgn
 
 from sanic import Blueprint
-from sanic.response import json, empty
+from sanic.response import empty, json
 
 # from sanic.log import logger
-from sanic_ext import validate, openapi
-
-import arrow
-
-from sqlalchemy import select, or_
+from sanic_ext import openapi, validate
+from sqlalchemy import or_, select
 from sqlalchemy.sql.expression import Select
 
+import models
+from auth import has_session
 from classes import (
+    ChessEntry,
+    GetGameOptions,
+    Message,
+    NewChessGameOptions,
+    NewChessGameResponse,
+    NewChessMove,
     PublicChessGameResponse,
     Request,
-    ChessEntry,
-    NewChessGameResponse,
-    NewChessGameOptions,
-    Message,
-    NewChessMove,
-    GetGameOptions,
 )
 
-from auth import has_session
-
-import models
-
 chess_blueprint = Blueprint("chess", url_prefix="/chess")
+
 
 def strtobool(val: str):
     """
@@ -47,12 +44,13 @@ def strtobool(val: str):
     'val' is anything else.
     """
     val = val.lower()
-    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+    if val in ("y", "yes", "t", "true", "on", "1"):
         return 1
-    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+    elif val in ("n", "no", "f", "false", "off", "0"):
         return 0
     else:
         raise ValueError(f"invalid truth value {val}")
+
 
 def get_player_team(game: models.Game, session: models.Session, user: models.User):
     """
@@ -90,15 +88,13 @@ async def get_games(
     options = dict(request.query_args)
 
     # get all game ids that the requesting user is participating in
-    query_users_game_ids: Select = (
-        select(models.Player.game_id)
-        .where(models.Player.user == user)
+    query_users_game_ids: Select = select(models.Player.game_id).where(
+        models.Player.user == user
     )
 
     # get all game ids that the requesting session is participating in
-    query_session_game_ids: Select = (
-        select(models.Player.game_id)
-        .where(models.Player.session == session)
+    query_session_game_ids: Select = select(models.Player.game_id).where(
+        models.Player.session == session
     )
 
     stmt: Select = select(models.Game)
@@ -111,7 +107,9 @@ async def get_games(
     )
 
     if bool(strtobool(options["my_games"])) is True:
-        if user:  # set the query to use both subqueries with an OR operator if the requesting session has a user
+        if (
+            user
+        ):  # set the query to use both subqueries with an OR operator if the requesting session has a user
             exp = or_(
                 models.Game.__table__.columns.game_id.in_(query_session_game_ids),
                 models.Game.__table__.columns.game_id.in_(query_users_game_ids),
@@ -139,7 +137,9 @@ async def get_games(
         dictgame["is_white"] = get_player_team(game=game, session=session, user=user)
         return dictgame
 
-    formattedgames: List[PublicChessGameResponse] = [await process_game(game) for game in games]
+    formattedgames: List[PublicChessGameResponse] = [
+        await process_game(game) for game in games
+    ]
 
     return json(formattedgames)
 
@@ -166,7 +166,6 @@ async def create_game(
     )
 
     async with query_session.begin():
-
         game_timer_result = await query_session.execute(gtstmt)
 
         game_timer = game_timer_result.scalar_one_or_none()
@@ -249,7 +248,6 @@ async def enter_game(
     query_session = request.ctx.session
 
     async with query_session.begin():
-
         game: Optional[models.Game] = await query_session.get(
             models.Game, gameid, populate_existing=True
         )
@@ -350,7 +348,6 @@ async def make_move(
     query_session = request.ctx.session
 
     async with query_session.begin():
-
         game: Optional[models.Game] = await query_session.get(
             models.Game, gameid, populate_existing=True
         )
@@ -389,17 +386,24 @@ async def make_move(
         seconds_since_start = (arrow.now() - game.time_started).total_seconds()
 
         if game.timer.timer_name == "Countdown":
-
             if game.timeLimit is None:
-                return json({"message": "countdown games should have a time limit...\nuh oh."}, status=500)
+                return json(
+                    {"message": "countdown games should have a time limit...\nuh oh."},
+                    status=500,
+                )
 
             times = []
             for node in chessgame.mainline():
-
                 clock = node.clock()
 
                 if clock is None:
-                    return json({"message": "failed to read move data. uh oh.", "move": repr(node)}, status=500)
+                    return json(
+                        {
+                            "message": "failed to read move data. uh oh.",
+                            "move": repr(node),
+                        },
+                        status=500,
+                    )
 
                 times.append(clock - game.timeLimit)
 
@@ -411,7 +415,6 @@ async def make_move(
             is_white = True
 
             for time in times:
-
                 if is_white:
                     white += last_time - time
                 else:
@@ -434,11 +437,23 @@ async def make_move(
                 black -= seconds_since_start - time_moving
 
             if white <= 0:
-                await request.respond(json({"message": "white ran out of time before your request reached the server"}))
+                await request.respond(
+                    json(
+                        {
+                            "message": "white ran out of time before your request reached the server"
+                        }
+                    )
+                )
 
                 return await game.hospice()
             elif black <= 0:
-                await request.respond(json({"message": "black ran out of time before your request reached the server"}))
+                await request.respond(
+                    json(
+                        {
+                            "message": "black ran out of time before your request reached the server"
+                        }
+                    )
+                )
 
                 return await game.hospice()
 

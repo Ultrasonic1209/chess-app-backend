@@ -6,11 +6,10 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import List, Optional, TypedDict
 
-from sanic import Sanic
-from sanic import Request as SanicRequest
-from sanic_ext import Config
-
 import httpx
+from sanic import Request as SanicRequest
+from sanic import Sanic
+from sanic_ext import Config
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

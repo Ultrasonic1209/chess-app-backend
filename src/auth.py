@@ -1,24 +1,23 @@
 """
 From https://sanic.dev/en/guide/how-to/authentication.html#auth.py
 """
+import secrets
 from datetime import datetime
 from functools import wraps
 from typing import Optional
 from urllib.parse import urlparse
-import secrets
 
 import jwt
 
-from sanic import text, json
 import sanic
+from sanic import json, text
 
 # from sanic.log import logger
-
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from models import Session, User
 from classes import Request, Token
+from models import Session, User
 
 
 def get_hostname(url, uri_type="netloc_only"):
@@ -42,9 +41,9 @@ def check_token(request: Request) -> Optional[Token]:
 
     try:
         # i shouldnt need to unpack the jwt here but it keeps the typechecker happy
-        return Token(**jwt.decode(
-            jwt=token, key=request.app.config.SECRET, algorithms=["HS256"]
-        ))
+        return Token(
+            **jwt.decode(jwt=token, key=request.app.config.SECRET, algorithms=["HS256"])
+        )
     except jwt.exceptions.InvalidTokenError:
         return None
 

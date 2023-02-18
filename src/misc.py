@@ -2,13 +2,14 @@
 Misc things that don't fit in anywhere else
 """
 import asyncio
-from sanic import Blueprint, text, json
+
+from sanic import Blueprint, json, text
 from sanic.log import logger
 
 from classes import Request
 
-misc = Blueprint("misc", url_prefix="/misc")
 
+misc = Blueprint("misc", url_prefix="/misc")
 
 @misc.get("eyep")
 async def eyep(request: Request):
