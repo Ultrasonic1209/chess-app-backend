@@ -7,7 +7,6 @@ from textwrap import dedent
 
 import git
 import httpx
-import models
 from dotenv import load_dotenv
 from sanic import json, text
 from sanic.worker.manager import WorkerManager
@@ -22,6 +21,7 @@ from sqlalchemy.ext.asyncio import (
 from chess_bp import chess_blueprint as chessBp
 from classes import App, AppConfig, Request
 from misc import misc
+import models
 from user import user_bp
 
 WorkerManager.THRESHOLD = 100  # Value is in 0.1s
