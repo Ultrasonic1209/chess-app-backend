@@ -21,7 +21,7 @@ from classes import Request, Token
 from models import Session, User
 
 
-def get_hostname(url: str, uri_type: str="netloc_only"):
+def get_hostname(url: str, uri_type: str = "netloc_only"):
     """Get the host name from the url"""
     parsed_uri = urlparse(url)
     if uri_type == "both":
