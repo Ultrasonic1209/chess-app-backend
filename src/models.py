@@ -10,8 +10,16 @@ import arrow
 import chess
 import chess.pgn
 
-from sqlalchemy import BOOLEAN, Column, ForeignKey, String, func
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import ForeignKey
+from sqlalchemy import String
+from sqlalchemy import Boolean
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import DeclarativeBase
+
+from sqlalchemy.sql import functions
+
 from sqlalchemy.dialects.mysql.types import INTEGER
 
 from sqlalchemy_utils import PasswordType, EmailType, ArrowType, force_auto_coercion
@@ -20,9 +28,7 @@ import classes
 
 force_auto_coercion()
 
-__all__ = ["Base", "User", "Player", "Game", "Session"]
-
-Base = declarative_base()
+__all__ = ["BaseModel", "User", "Player", "Game", "Session"]
 
 _LAZYMETHOD = "selectin"
 
@@ -58,7 +64,7 @@ def hash_email(email: Optional[str]):
     return hashlib.md5(email).hexdigest()
 
 
-class BaseModel(Base):
+class BaseModel(DeclarativeBase):
     """
     Base Model
     """
@@ -86,29 +92,29 @@ class User(BaseModel):
         if self.email:
             return hash_email(self.email)
 
-    user_id: int = Column(INTEGER(unsigned=True), primary_key=True, comment="User ID")
+    user_id: Mapped[int] = mapped_column(INTEGER(unsigned=True), primary_key=True, comment="User ID")
 
-    username: str = Column(String(63), nullable=False, unique=True, comment="Username")
-    password: str = Column(
+    username: Mapped[str] = mapped_column(String(63), nullable=False, unique=True, comment="Username")
+    password: Mapped[str] = mapped_column(
         PasswordType(schemes=["pbkdf2_sha512"]), nullable=False, comment="Password"
     )
 
-    score = Column(
+    score: Mapped[int] = mapped_column(
         INTEGER(unsigned=True), nullable=False, default=400, comment="Player score"
     )
 
-    email: Optional[str] = Column(EmailType(length=127), nullable=True, comment="Email address")
+    email: Mapped[Optional[str]] = mapped_column(EmailType(length=127), nullable=True, comment="Email address")
 
-    time_created: arrow.Arrow = Column(
+    time_created: Mapped[arrow.Arrow] = mapped_column(
         ArrowType,
         nullable=False,
-        server_default=func.now(),
+        server_default=functions.now(),
         comment="Account creation timestamp",
     )
 
-    players = relationship("Player", back_populates="user", lazy=_LAZYMETHOD)
+    players: Mapped[List["Player"]] = relationship("Player", back_populates="user", lazy=_LAZYMETHOD)
 
-    sessions = relationship("Session", back_populates="user", lazy=_LAZYMETHOD)
+    sessions: Mapped[List["Session"]] = relationship("Session", back_populates="user", lazy=_LAZYMETHOD)
 
     def to_dict(self):
         return {
@@ -131,18 +137,18 @@ class User(BaseModel):
         )
 
 
-class Session(Base):
+class Session(BaseModel):
     """
     For unregistered players to be able to play online games.
     """
 
     __tablename__ = "Session"
 
-    session_id = Column(
+    session_id: Mapped[int] = mapped_column(
         INTEGER(unsigned=True), nullable=False, primary_key=True, comment="Session ID"
     )
 
-    session: str = Column(
+    session: Mapped[str] = mapped_column(
         String(255),
         primary_key=False,
         nullable=False,
@@ -151,15 +157,15 @@ class Session(Base):
         comment="Session Token (Password for machines)",
     )
 
-    user_id = Column(
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("User.user_id"), nullable=True, comment="Linked User ID"
     )
 
-    user: Optional[User] = relationship(
+    user: Mapped[Optional[User]] = relationship(
         "User", back_populates="sessions", uselist=False, lazy=_LAZYMETHOD
     )
 
-    players = relationship("Player", back_populates="session", lazy=_LAZYMETHOD)
+    players: Mapped[List["Player"]] = relationship("Player", back_populates="session", lazy=_LAZYMETHOD)
 
     def public_to_dict(self) -> classes.PublicChessEntityDict:
         """
@@ -185,40 +191,40 @@ class Player(BaseModel):
         """
         return self.user.get_avatar_hash() if self.user else ""
 
-    game_id = Column(
+    game_id: Mapped[int] = mapped_column(
         ForeignKey("Game.game_id"),
         nullable=False,
         primary_key=True,
         comment="Linked Game ID",
     )
 
-    is_white: bool = Column(
-        BOOLEAN(),
+    is_white: Mapped[bool] = mapped_column(
+        Boolean(),
         nullable=False,
         primary_key=True,
         comment="Flags the player's colour.",
     )
 
-    user_id = Column(
+    user_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("User.user_id"), nullable=True, comment="Linked User ID"
     )
 
-    session_id = Column(
+    session_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("Session.session_id"), nullable=True, comment="Linked Session ID"
     )
 
-    user: Optional[User] = relationship(
+    user: Mapped[Optional[User]] = relationship(
         "User", back_populates="players", uselist=False, lazy=_LAZYMETHOD
     )
 
-    game = relationship(
+    game: Mapped["Game"] = relationship(
         "Game",
         back_populates="players",
         uselist=False,
         lazy=_LAZYMETHOD,
     )
 
-    session: Session = relationship("Session", uselist=False, lazy=_LAZYMETHOD)
+    session: Mapped[Session] = relationship("Session", uselist=False, lazy=_LAZYMETHOD)
 
     def to_dict(self) -> classes.PublicChessPlayer:
         return {
@@ -245,9 +251,9 @@ class GameTimer(BaseModel):
 
     __tablename__ = "GameTimer"
 
-    timer_id = Column(INTEGER(unsigned=True), primary_key=True, comment="Timer ID")
+    timer_id: Mapped[int] = mapped_column(INTEGER(unsigned=True), primary_key=True, comment="Timer ID")
 
-    timer_name = Column(String(15), nullable=False, comment="Timer Name")
+    timer_name: Mapped[str] = mapped_column(String(15), nullable=False, comment="Timer Name")
 
 
 class Game(BaseModel):
@@ -257,39 +263,39 @@ class Game(BaseModel):
 
     __tablename__ = "Game"
 
-    game_id = Column(INTEGER(unsigned=True), primary_key=True, comment="Game ID")
+    game_id: Mapped[int] = mapped_column(INTEGER(unsigned=True), primary_key=True, comment="Game ID")
 
-    game = Column(
+    game: Mapped[str] = mapped_column(
         String(8192),
         nullable=True,
         comment="Holds game metadata and a list of moves made",
     )
 
-    time_started: Optional[arrow.Arrow] = Column(
+    time_started: Mapped[Optional[arrow.Arrow]] = mapped_column(
         ArrowType, nullable=True, comment="Game start timestamp"
     )
 
-    time_ended: Optional[arrow.Arrow] = Column(
+    time_ended: Mapped[Optional[arrow.Arrow]] = mapped_column(
         ArrowType, nullable=True, comment="Game end timestamp"
     )
 
-    white_won: bool = Column(
-        BOOLEAN(), nullable=True, comment="Whether the player playing white won or not"
+    white_won: Mapped[Optional[bool]] = mapped_column(
+        Boolean(), nullable=True, comment="Whether the player playing white won or not"
     )
 
-    timer_id = Column(
+    timer_id: Mapped[int] = mapped_column(
         ForeignKey("GameTimer.timer_id"), nullable=False, comment="The game's timer ID"
     )
 
-    timeLimit: Optional[int] = Column(
+    timeLimit: Mapped[Optional[int]] = mapped_column(
         INTEGER(unsigned=True),
         nullable=True,
         comment="The amount of time each player gets",
     )
 
-    timer: GameTimer = relationship("GameTimer", uselist=False, lazy=_LAZYMETHOD)
+    timer: Mapped[GameTimer] = relationship("GameTimer", uselist=False, lazy=_LAZYMETHOD)
 
-    players: List[Player] = relationship(
+    players: Mapped[List[Player]] = relationship(
         "Player", back_populates="game", lazy=_LAZYMETHOD
     )
 

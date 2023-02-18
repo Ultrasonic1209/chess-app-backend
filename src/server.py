@@ -10,8 +10,7 @@ import httpx
 from dotenv import load_dotenv
 
 from sqlalchemy import inspect
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine, async_sessionmaker
 
 from sanic import json, text
 from sanic.worker.manager import WorkerManager
@@ -93,6 +92,7 @@ bind = create_async_engine(
     f"mysql+asyncmy://checkmate:{sqlpass}@server.ultras-playroom.xyz/checkmate",
     echo=ISDEV,
     pool_recycle=3600,
+    future=True
 )
 
 app.config.SECRET = os.getenv("JWT_SECRET", "")
@@ -110,7 +110,7 @@ async def attach_httpx(_app: App, _):
     _app.ctx.httpx = httpx.AsyncClient()
 
 
-local_session = sessionmaker(bind, AsyncSession, expire_on_commit=False)
+local_session = async_sessionmaker(bind, expire_on_commit=False)
 
 
 @app.middleware("request")
@@ -171,8 +171,8 @@ async def sql_initalise(request: Request):
     async with query_session.begin():
         conn: AsyncConnection = await query_session.connection()
 
-        await conn.run_sync(models.Base.metadata.drop_all)
-        await conn.run_sync(models.Base.metadata.create_all)
+        await conn.run_sync(models.BaseModel.metadata.drop_all)
+        await conn.run_sync(models.BaseModel.metadata.create_all)
 
         user = models.User()
 

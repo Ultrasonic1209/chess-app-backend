@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 import email.errors
 from email.headerregistry import Address
 from statistics import mode
-from typing import List, Optional
 
 import jwt
 
@@ -74,9 +73,9 @@ async def do_login(
     stmt = select(models.User).where(models.User.username == username)
 
     async with query_session.begin():
-        resp: Result = await query_session.execute(stmt)
+        resp = await query_session.execute(stmt)
 
-        resp_user: Optional[models.User] = resp.scalar_one_or_none()
+        resp_user = resp.scalar_one_or_none()
 
         if resp_user is None:
             # account not found
@@ -349,15 +348,15 @@ async def user_stats(request: Request, user: models.User, session: models.Sessio
 
     async with query_session.begin():
         # execute query_game_amount, save result to game_result_amount
-        game_result_amount: Result = await query_session.execute(query_game_amount)
+        game_result_amount = await query_session.execute(query_game_amount)
         # execute query_games, save result to game_result
-        game_result: Result = await query_session.execute(query_games)
+        game_result = await query_session.execute(query_games)
 
     # represent games_result as a list of ORM Game objects
-    game_results: List[models.Game] = game_result.scalars().all()
+    game_results = game_result.scalars().all()
 
     # represent game_result_amount as an integer showing the number of games played
-    games_played: int = game_result_amount.scalar_one()
+    games_played = game_result_amount.scalar_one()
 
     games_won = list(
         filter(

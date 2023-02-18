@@ -16,7 +16,6 @@ from sanic_ext import validate, openapi
 
 import arrow
 
-from sqlalchemy.engine import Result
 from sqlalchemy import select, or_
 from sqlalchemy.sql.expression import Select
 
@@ -125,9 +124,9 @@ async def get_games(
     query_session = request.ctx.session
 
     async with query_session.begin():
-        game_result: Result = await query_session.execute(stmt)
+        game_result = await query_session.execute(stmt)
 
-    games: List[models.Game] = game_result.scalars().all()
+    games = game_result.scalars().all()
 
     async def process_game(game: models.Game) -> PublicChessGameResponse:
         """
@@ -168,9 +167,9 @@ async def create_game(
 
     async with query_session.begin():
 
-        game_timer_result: Result = await query_session.execute(gtstmt)
+        game_timer_result = await query_session.execute(gtstmt)
 
-        game_timer: Optional[models.GameTimer] = game_timer_result.scalar_one_or_none()
+        game_timer = game_timer_result.scalar_one_or_none()
 
         if not game_timer:
             return json(

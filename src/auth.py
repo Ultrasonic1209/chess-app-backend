@@ -15,7 +15,6 @@ import sanic
 # from sanic.log import logger
 
 from sqlalchemy import select
-from sqlalchemy.engine import Result
 from sqlalchemy.orm import selectinload
 
 from models import Session, User
@@ -74,9 +73,9 @@ async def authenticate_request(request: Request):
         )
 
         async with query_session.begin():
-            user_session_result: Result = await query_session.execute(stmt)
+            user_session_result = await query_session.execute(stmt)
 
-            user_session: Optional[Session] = user_session_result.scalar_one_or_none()
+            user_session = user_session_result.scalar_one_or_none()
 
             user = user_session.user if user_session else None
 
