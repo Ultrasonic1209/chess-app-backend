@@ -29,4 +29,4 @@ jobs:
       with:
         url: 'https://api-chessapp.server.ultras-playroom.xyz/misc/update'
         method: 'PATCH'
-        customHeaders: '{"X-Admin-Key": "***REMOVED***"}'
+        customHeaders: '{"X-Admin-Key": "ADK"}'

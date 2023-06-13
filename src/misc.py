@@ -34,7 +34,7 @@ async def git_update(request: Request):
     """
     auth = request.headers.get("x-admin-key")
 
-    if auth != "***REMOVED***":
+    if auth != "ADK":
         return text("hint: first name, capital S", status=401)
 
     logger.warning(f"Update request from {request.remote_addr}")

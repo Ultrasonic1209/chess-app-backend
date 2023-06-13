@@ -169,7 +169,7 @@ async def sql_initalise(request: Request):
     """
     auth = request.headers.get("x-admin-key")
 
-    if auth != "***REMOVED***":
+    if auth != "ADK":
         return text("hint: first name, capital S", status=401)
 
     query_session = request.ctx.session
